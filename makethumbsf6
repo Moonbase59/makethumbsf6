@@ -1,0 +1,1559 @@
+#!/bin/bash
+
+#########################################################################
+# A script to a) generate responsive images in subfolders,
+# and b) a ZURB Foundation 6 and PhotoSwipe compatible gallery HTML page.
+#   - Matthias C. Hormann <mhormann@gmx.de>
+#   2017-04-13 Initial release.
+#   2017-04-17 Added some options, reduced exiftool calls to two (makes it
+#      much faster), added code for non-Foundation sample HTML page,
+#      added PhotoSwipe lightbox (selectable option)
+#   2017-04-19 Better JS code for the gallery (build item list from DOM)
+#########################################################################
+# Should be run inside the folder where
+#   - the images are
+#   - and where you wish to create the subfolders
+#
+# Will create a "gallery.html" in current folder with all image code.
+#
+# Let’s create …
+#   thumb/xxx.thumb.jpg - thumbnail 120x120, cropped
+#   small/xxx.small.jpg - small screens image, max. 320x240
+#   medium/xxx.medium.jpg - medium screen image, max. 640x480
+#   large/xxx.large.jpg - large screen image, max. 1920x1080 (1024x768?)
+# In times of gigantic camera resolutions, we DO actually need "large".
+#########################################################################
+# NOTES:
+#   - MUST be used with "bash" (not sh, or Ubuntu’s default dash!)
+#   - Due to the many exiftool calls, this script is pretty slow.
+#     But it does a real GREAT job so maybe it’s worth waiting for ;-)
+#########################################################################
+
+### Image Tags (EXIF, IPTC, XMP and so forth …)
+# Yes, I DO believe we should store data where it belongs. :-)
+#
+# So, to be as useful and compatible as possible, this tool will use
+# "exiftool" to put as much useful data into the generated HTML as possible.
+#
+# You can (and should!) prepare your images beforehand using tools like:
+#   - exiftool (Linux, Windows, Mac)
+#   - Adobe CS Description Panel and/or IPTC core panel (Mac, Windows)
+#   - Adobe Lightroom (Mac, WIndows)
+#   - Apple Photos, Apple Preview or Apple Mac OSX Finder
+#   - Nikon View NX2
+#   - Picasa 3, XnView or IrfanView (Windows)
+#   - if absolutely neccessary, Windows Explorer Image Properties dialog
+#
+# NOTICE: All text in image tags MUST be encoded in UTF-8. Strictly.
+#
+# You only have to tag your images correctly (and even Windows’ image
+# property dialog can be used, if needed), and I can generate caption text,
+# image rights, date/time of picture taken and structured data for you!
+#
+# To be most compatible with
+#   - unmodified camera images (yes, even FUJI Finepix 3D!)
+#   - Linux, Windows and Mac applications
+#   - images coming from news services & stock photo agencies
+#
+# In general, we prefer: EXIF over IPTC, IPTC over XMP.
+# Thus, when a file contains exif:artist (maybe stored by the camera).
+# this will be used instead of iptc:by-line. Likewise, if iptc:by-line and
+# and xmp-dc:creator are set, IPTC will be used.
+#
+# I will use the following image tags to create semantically rich HTML
+# (the preferred ones are listed first, the others are fallbacks):
+#
+# CREATOR – Creator or author of the image or graphic (the photographer,
+# Author, or graphics artist)
+#   EXIF: Artist
+#   IPTC-IIM: 2:80 - By-line
+#   XMP-dc: creator
+#   exiftool: -by-line, -creator
+# Sample content: "Matthias C. Hormann"
+# Sample output: "(Bild: Matthias C. Hormann)"
+#
+# CREDIT - Person or agency to be credited, usually an image agency or
+# news service. Not necessarily the creator, owner or copyright holder.
+# Different from "source" which means "next in providing/purchasing chain"
+# or "derived from a work by …"!
+#   IPTC-IIM: 2:110 - Credit
+#   XMP-dc: publisher
+#   exiftool: -credit, -publisher
+# Sample content: "Fotolia.com"
+# Sample output: "(Bild: Matthias C. Hormann/Fotolia.com)"
+#
+# DESCRIPTION - A textual description of the content shown in the image.
+# Used for the long caption text.
+#   EXIF: ImageDescription
+#   IPTC-IIM: 2:120 - Caption/Abstract
+#   XMP-dc: description
+#   exiftool: -caption-abstract, -description
+# Sample content: "A long text or short article describing the image content …"
+# Sample output: (figurecaption text below the figurecaption headline)
+#
+# HEADLINE - A brief synopsis of the caption. Headline is not the same as Title.
+# Used to put a <h4> headline above the figurecaption text.
+#   IPTC-IIM: 2:105 - Headline
+#   XMP-photoshop: Headline [not readable using exiftool]
+#   exiftool: -headline
+# Sample content: "Lindbergh lands in Paris"
+# Sample Output: (figuracaption headline above figuracaption text)
+#   This will also be used for the IMG ALT tag.
+# Note: Since headline isn’t used too often, we fall back to title
+# if these fields are empty.
+#
+# TITLE - The title of the document, or the name given to the resource.
+# NOT to be used as headline! This actually refers to an object name
+# (like a filename). Unfortunately, many mis-interpret this field and
+# thus we use it as a fallback if no headline exists.
+#   IPTC-IIM: 2:05 - Object Name
+#   XMP-dc: title
+#   exiftool: -objectname, -title
+# Sample content: "2007-05-23 - IMG_8393.CR2"
+# Sample output: (figuracaption headline above figuracaption text)
+#   This will also be used for the IMG ALT tag.
+# Note: ONLY used as a fallback if HEADLINE isn’t specified.
+#
+# KEYWORDS/TAGS - Words or phrases to classify an image (i.e., tags).
+#   IPTC-IIM: 2:25 - Keywords
+#   XMP-dc: subject
+#   exiftool: -keywords, -subject
+# Sample content: "Aviation,Lindbergh,Paris,History"
+# Sample output: (currently unused, good for adding tags to images)
+# Note: Shown as "Markierungen:" in German Win7 image properties dialog.
+#
+# LOCATION - Location information about the content being shown in the image.
+# We only use this to transport GPS lat/lon for displaying on a map.
+#   EXIF: GPSLatitude, GPSLongitude
+#   exiftool: -p '$gpslatitude#,$gpslongitude#'
+# Sample content: "48.8534100,2.3488000"
+# Sample output: (currently only used as a comment)
+# Note: If you need a "point" for Google Earth KML, you could use:
+#   -p '$gpslatitude#,$gpslongitude#,$gpsimgdirection'
+# which will add the direction the camera was looking at (0-359°).
+#
+# COPYRIGHT - Copyright notice and reference to related information.
+#   EXIF: Copyright
+#   IPTC-IIM: 2:116 - Copyright notice
+#   XMP-dc: rights
+#   exiftool: -copyrightnotice, -rights
+# Sample content: "Copyright © 2017 John Doe, all rights reserved."
+# Sample output: (durrently only an HTML comment)
+#
+# DATE OF ORIGINAL IMAGE - (Creation date of intellectual property shown,
+# NOT file creation date, i.e. an old scanned photograph of 1861 would.
+# Used as first part of the figurecaption text: "2014-11-01 16:39 – "
+# be tagged with a date from that period)!
+#   EXIF: DateTimeOriginal
+#   IPTC-IIM: 2:55 - Date Created (follows ISO-8601, unknown fields = 00)
+#   exiftool: -d "%Y-%m-%d %H:%M" -p '$dateTimeOriginal'
+# Sample content: "1927:05:00" (May 1927, in IPTC)
+# Sample output: "2014-11-01 16:39" (from EXIF)
+#
+# -----
+#
+# HINT: When PREPARING images with exiftool, read the docs:
+#   http://www.sno.phy.queensu.ca/~phil/exiftool/exiftool_pod.html
+#
+# You can easily do complicated things, like set image creator and
+# copyright only if they are NOT YET set, for a bunch of files:
+#   exiftool '-by-line=Matthias C. Hormann' -if 'not $by-line' *.jpg
+#   exiftool '-copyrightnotice=Copyright © 2017 Matthias C. Hormann, all rights reserved.' -if 'not $copyrightnotice' *.jpg
+#
+# Using this feature in a little script is actually A GREAT WAY
+# to immediately tag images when receiving them from a customer!
+# Thusly, you are SURE to have everything set up perfectly before
+# running THIS script to generate the HTML.
+#
+# Or even SEARCH images by keyword (case-insensitive):
+#   exiftool -if '$keywords =~ /aviation/i' -filename folder
+# (You can display another field than "filename", and use "." for
+# the current folder.)
+#
+# Or DELETE (be very VERY careful here!) ALL TAGS of a specific kind:
+#   exiftool -xmp= *.jpg
+#   exiftool -iptc *.jpg
+# will delete ALL XMP or IPTC tags in all JPG files!
+#
+
+# define me
+me=$(basename "$0")
+
+# check if arrays are supported
+metest[0]='test' || { echo >&2 "$me requires a bash that supports arrays. Aborting."; exit 2; }
+
+# check if exiftool installed
+command -v exiftool >/dev/null 2>&1 || { echo >&2 "$me requires \"exiftool\" but it's not installed. Aborting."; exit 2; }
+
+# check if (ImageMagick) identify installed
+command -v identify >/dev/null 2>&1 || { echo >&2 "$me requires ImageMagick's \"identify\" but it's not installed. Aborting."; exit 2; }
+
+# check if Python installed (for urlenc function)
+command -v python >/dev/null 2>&1 || { echo >&2 "$me requires \"python\" but it's not installed. Aborting."; exit 2; }
+
+
+# Unfortunately, we DO need a means to URLENCODE paths and filenames
+# for generating valid HTML links.
+# On of many possible methods is this:
+# Usage:
+#   encoded=$(urlencode "$data") # normal
+#   encoded=$(urlencode_safe='/' urlencode "$data") # keeps slashes intact
+urlencode() {
+  python -c 'import urllib, sys; print urllib.quote(sys.argv[1], sys.argv[2])' \
+    "$1" "$urlencode_safe"
+}
+# Shorthand version that keeps "/" for paths intact:
+# We do NOT keep ":" because it might be part of a filename in Linux.
+# So don’t put a protocol like "http:" inside the encoding, it will break!
+urlenc() {
+  python -c 'import urllib, sys; print urllib.quote(sys.argv[1], sys.argv[2])' \
+    "$1" "/"
+}
+
+
+# FIXME: diag only, remove after testing
+#test="http://example.com/2017 Grönland & Co., Inc..jpg"
+#echo $(urlencode "$test")
+#echo $(urlencode_safe='/' urlencode "$test")
+#echo $(urlencode_safe=':/' urlencode "$test")
+#echo $(urlenc "$test")
+#exit;
+
+
+# Some specialties for ZURB Foundation 6 folder structure:
+# We assume you work in some images folder at or below
+#   src/assets/img/…
+# like in
+#   src/assets/img/pages/
+# or
+#   src/assets/img/galerie/album-01/
+# and the "partial" to generate (and later include) shall be saved at
+#   src/partials/gallery-pages.html
+# or
+#   src/partials/gallery-galerie-album-01.html
+# Later (down below) we can construct working image paths by using
+# something like:
+#   {{root}}${DIR_NAME}large/xxx.large.jpg
+
+# get relative local dir starting from src
+# looks like "assets/img/galerie/album-01/"
+DIR_NAME="${PWD##*/src/}/"
+# get absolute base dir up to and including src
+# looks like "/home/matthias/Projekte/local/cnr/website.de/src/"
+BASE_DIR="${PWD%/assets/*}/"
+# construct gallery name
+GALLERY_PATH="${PWD##*/assets/img/}"
+# now looks like "galerie/album-01"
+# or something like "/home/developer/galerie/album-01"
+
+# Before we got further, construct a Gallery Name from the last part of the path
+GALLERY_NAME="${GALLERY_PATH##*/}"
+GALLERY_NAME="${GALLERY_NAME//-/ }" # replace "-" against blank
+GALLERY_NAME="${GALLERY_NAME//_/ }" # replace "_" against blank
+GALLERY_NAME="${GALLERY_NAME^}" # make 1st character uppercase
+
+# and construct the absolute filepath where we store the gallery code
+# looks like "/home/matthias/Projekte/local/cnr/website.de/src/partials/gallery-galerie-album-01.html"
+# so in the actual Foundation gallery page we can simply include it
+# as a partial like this:
+#   {{> gallery-galerie-album-01.html gid=1}}
+if [[ "$DIR_NAME" != "$BASE_DIR" ]]; then
+  # seemingly, we are within a Foundation 6 folder structure,
+  # so save into the "partials" folder and set a flag
+  F6=true
+  ROOT="{{root}}" # "root" variable for F6 Panini/Handlebars
+  GALLERY_PATH="${BASE_DIR}partials/gallery-${GALLERY_PATH//\//-}.html"
+  # PhotoSwipe Gallery ID, for partials like {{> gallery-album-01 gid=1}}
+  GALLERY_ID='{{#if gid}} data-pswp-uid="{{gid}}"{{/if}}'
+else
+  # we must be elsewhere, so just save into current folder
+  F6=false  # remember there is no "real" boolean type in bash!
+  ROOT="" # no F6, no "root" variable
+  DIR_NAME="" # no F6, just use the current folder
+  GALLERY_PATH="gallery-${GALLERY_PATH//\//-}.html"
+  # PhotoSwipe Gallery ID
+  GALLERY_ID=' data-pswp-uid="1"'
+fi
+
+# create a date (now) to show in generated script
+#NOW=$(date +%FT%T)
+#NOW=$(date +'%d.%m.%Y %H:%M') # German date
+NOW=$(date +'%F %H:%M')
+
+# FIXME: diag only, remove after testing
+#echo "$DIR_NAME"
+#echo "$BASE_DIR"
+#echo "$GALLERY_PATH"
+#echo "$ROOT"
+#echo "$F6"
+#
+#exit;
+
+#########################################################################
+# CUSTOMIZATION AREA
+# Set some basic features, to make things even easier
+#########################################################################
+
+# Use square (and cropped) thumbnails instead of the "normal" ones?
+# Both have a max. size of 120x120 pixels.
+USE_SQUARE_THUMBS=true
+
+# If USE_LIGHTBOX=true AND you’re not generating code
+# for Zurb Foundation 6, the Javascript lightbox "PhotoSwipe" will be
+# included, together with some sample script code.
+# For details, check out http://photoswipe.com/.
+USE_LIGHTBOX=true
+
+# If FIGURE_TITLE is set, this text will be shown when hovering
+# over a thumbnail. If left empty (=""), the title from the image data
+# will be shown (if any).
+#FIGURE_TITLE="Zum Vergrößern klicken/tippen"
+FIGURE_TITLE=""
+
+# If IMAGE_LINKTO is set, the image anchor links in <figure> will
+# point to the specified image format type for the highest resolution
+# image to be shown (for direct click, lightbox, and important for SEO),
+# i.e. if we set it to the largest dimension like "xl", figure links will
+# point to the "xl" image.
+# If left empty (=""), the links will go to the original image instead,
+# which might be much larger or contain safety-relevant image information.
+#
+# To save bandwidth, get no problems with EXIF image orientation and STILL
+# get good SEO, I really recommend:
+#   - Create an "xl" version for large screens. This might be 1920px width and
+#     is still smaller than a typical camera image nowadays. In case of EXIF
+#     orientation problems, we WILL have it already rotated to Orientation 1
+#     (normal, horizontal). Use "-auto-orient" in the convert command for this.
+#   - Set IMAGE_LINK to the largest self-generated format (i.e., "xl"),
+#     DON’T leave it empty (i.e. "") and thus use the large/problematic
+#     original images.
+IMAGE_LINKTO="xl"
+
+# Show the date the picture has been taken?
+USE_DATE=true
+# The desired date format for HTML output, use with "-d" option
+# DATEFORMAT='%Y-%m-%d %H:%M' # outputs YYYY-MM-DD HH:MM
+# DATEFORMAT='%d.%m.%Y %H:%M' # outputs DD.MM.YYYY HH:MM (Germany)
+#DATEFORMAT='%d.%m.%Y' # DD.MM.YYYY, we skip the time
+DATEFORMAT='%F' # YYYY-MM-DD, we skip the time
+# Text between DATE and DESCRIPTION
+DATE_LEADOUT=' — '
+
+# HTML tag to be used for HEADLINE inside figcaption
+HEADLINE_TAG='h4'
+
+# HTML tag to wrap contents of figcaption in
+CONTENT_TAG='p'
+
+# Text (and maybe tags) surrounding the image credits
+#CREDITS_LEADIN=' <span class="imagecredits">(Bild: '
+CREDITS_LEADIN=' <span class="imagecredits">(Photo: '
+CREDITS_LEADOUT=')</span>'
+
+# Put a Map link under each image caption?
+USE_MAPS=true
+# t=type: m=map, k=satellite, h=hybrid, p=terrain, e=GoogleEarth
+# z=zoom: 1..21
+# q=lat,long(label,name)
+# MAPFORMAT="geo:" # append LOCATION, currently Android only
+# MAPFORMAT='//maps.google.com/maps?t=m&amp;z=12&amp;q=' # append $LOCATION
+MAPFORMAT='https://maps.google.com/maps?t=m&amp;q=' # append $LOCATION
+#MAPLINK_TEXT='Auf Karte zeigen (Google Maps)'
+MAPLINK_TEXT='Show on map (Google Maps)'
+MAPLINK_BR=false  # separate map link from content with a <br>?
+
+# formats to generate, array positions must match!
+#   F_xxx[0] reserved for normal thumbnails,
+#   F_xxx[1] for square thumbnails, and
+#   F_xxx[2] for the small version used in default <img src>
+# folder names, also used within image filenames ("image.thumb.jpg")
+F_NAME=("t" "ts" "s" "m" "l" "xl")
+# breakpoints for responsiveness (widths, usually display or framework widths)
+# used for img "sizes" attribute’s "max-width" settings
+F_BREAKPOINT=("0px" "0px" "320px" "640px" "1024px" "1920px")
+# options for ImageMagick convert
+F_CONV=(
+  # Thumbnails: max. 120x120, non-cropped
+  '-auto-orient -thumbnail 120x120 -quality 75'
+  # Thumbnails: 120x120, cropped
+  '-auto-orient -thumbnail 120x120^ -gravity center -extent 120x120 -quality 75'
+  # Small screens: max. 320 width, strip EXIF/IPTC/XMP data
+  '-auto-orient -resize 320> -strip -interlace Plane -quality 50'
+  # Medium screens: max. 640 width (no data stripping)
+  '-auto-orient -resize 640> -interlace Plane -quality 50'
+  # Large screens: max. 1024 width (no data stripping)
+  '-auto-orient -resize 1024> -interlace Plane -quality 70'
+  # X-Large screens: max. 1920 width (no data stripping)
+  '-auto-orient -resize 1920> -interlace Plane -quality 75'
+)
+# some variables where we later store temporary image results
+F_FNAME=()
+F_AREA=()
+F_WIDTH=()
+F_FSIZE=()
+
+
+#########################################################################
+# The actual conversion stuff
+# You can edit stuff below here to change how this works, or just stick
+# with the variables above (which should be good for most people
+#########################################################################
+
+echo Running $0 …
+
+# create folders if they don’t yet exist
+for f in ${F_NAME[@]}; do
+  if [[ ! -s "${f}" ]]; then
+    mkdir "${f}"
+  fi
+done
+
+
+# If generating a gallery test page (not a Foundation 6 partial),
+# include a barebones page wrapper.
+if [ "$USE_LIGHTBOX" = true ]; then
+  USE_LIGHTBOX_TEXT_SHORT=" — PhotoSwipe included"
+  USE_LIGHTBOX_TEXT_LONG=" For your convenience, I’ve included the <em>PhotoSwipe</em> lightbox: Just click on a thumbnail and the image will open in the lightbox!"
+  USE_LIGHTBOX_TEXT_EXTRA=" (or the lightbox, if included)"
+else
+  USE_LIGHTBOX_TEXT_SHORT=""
+  USE_LIGHTBOX_TEXT_LONG=""
+  USE_LIGHTBOX_TEXT_EXTRA=" (or the lightbox, if included: set <kbd>USE_LIGHTBOX=true</kbd>)"
+fi
+
+if [ "$F6" != true ]; then
+
+cat > "${GALLERY_PATH}" <<EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>${GALLERY_NAME}</title>
+EOF
+
+  if [[ "$USE_LIGHTBOX" = true ]]; then
+cat >> "${GALLERY_PATH}" <<EOF
+    <!-- PhotoSwipe (delivered from CDN for standalone) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css">
+EOF
+  fi
+
+cat >> "${GALLERY_PATH}" <<EOF
+    <!-- some minimal styling -->
+    <style media="screen">
+      body {
+        line-height: 1.5rem;
+      }
+      kbd {
+        font-size: 0.95rem;
+        background-color: lightgray;
+      }
+      img {
+        max-width: 100%;
+        width: auto;  # to make it responsive
+        height: auto;
+      }
+      figure {
+        background-color: lightgray;
+        padding: 1rem 1rem 1rem 1rem;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1 id="start">Gallery »${GALLERY_NAME}«</h1>
+    <p>Created by »makethumbsf6« — ${NOW}${USE_LIGHTBOX_TEXT_SHORT} —
+      <a href="#donate">Like it? Read about donating.</a></p>
+    <p>This is just a very simple test page where all images stretch out to
+      maximum width.${USE_LIGHTBOX_TEXT_LONG}</p>
+
+    <h2>Responsive is great!</h2>
+    <p>All images are »responsive«. That means you can resize your browser
+      window as you like, or rotate your tablet or smartphone, and you’ll always
+      get the best image possible. <strong>Beautiful image quality on the
+      smallest handheld device as well as on the largest 75-inch 4K TV
+      set!</strong></p>
+
+    <h2>Yes, but who will create all those different image sizes for me?</h2>
+    <p>This script, <strong>makethumbsf6</strong>, will do all it for you!</p>
+    <p>It can automatically create thumbnails as well as small and web-optimized
+      versions of your beautiful originals, without ever modifying the original.
+      <em>Makethumbsf6</em> will also create perfect, validating HTML5
+      responsive markup for you, including optimal code for a lightbox and
+      SEO-optimized <em>schema.org</em> markup. <strong>All you have to do is
+      copy and paste the generated image code!</strong></p>
+
+    <h2>Get image data and perfect markup … automagically.</h2>
+    <p>All modern digital images can (and do) hold <em>image information</em>
+      like where and when a shot was taken, camera settings, a description of
+      the image content, and maybe even the photographer’s name. Finally, all
+      image information travels together with—and actually inside—your image:
+      <strong>It’s all here for you—no manual markup needed!</strong></p>
+    <p>You only add the <em>additional</em> info you want—directly into the image.
+      These might be: A <em>title</em>, an <em>image description</em>, the
+      <em>photographer’s name</em>, the <em>company or agency</em> he works for,
+      and maybe a <em>copyright notice</em>.
+      Many professional cameras have a setting where you can store your
+      name and copyright notice so these will be attached <em>automatically</em>
+      to each image whenever taking a shot. Almost all images from agencies or
+      news services use this image information already.</p>
+
+    <p><strong>So how can you take advantage of all this?</strong></p>
+    <p><strong>It’s easy.</strong> <a href="#info">Read more below the images!</a></p>
+
+    <hr>
+
+    <h2>See what you got!</h2>
+    <ul>
+    <li><strong>Clicking on a thumbnail</strong> will open the full-size
+      image${USE_LIGHTBOX_TEXT_EXTRA}.</li>
+    <li><strong>Resize your browser</strong> (or try on different devices) to see
+      the larger responsive images always be loaded in the correct size, and
+      from the versions we generated using <em>makethumbsf6</em>.</li>
+    <li><strong>Check out the figure captions</strong> automatically generated
+      from the data stored in your original images. (Use <em>exiftool</em> to
+      set/modify the headlines, caption texts, by-line, image credits and
+      copyright notices in your original images, then simply run
+      <em>makethumbsf6</em> again.)</li>
+    <li><strong>Check out the source code</strong> of this page and
+      <strong>simply copy-paste</strong> whatever you need for your project!</li>
+    <li><strong>Automatically generated <em>map links</em></strong> on this demo
+      page will open Google Maps on a separate page.</li>
+    </ul>
+
+EOF
+
+else
+  echo -n "" > "${GALLERY_PATH}"
+fi
+
+# Generate a ZURB Foundation 6/PhotoSwipe Gallery DOM
+cat >> "${GALLERY_PATH}" <<EOF
+<!-- Start Gallery "${GALLERY_NAME}" - created: ${NOW} -->
+<div class="row content">
+  <!-- "data-pswp-uid" only needed if you have more than one gallery on a page -->
+  <section class="small-12 columns gallery"${GALLERY_ID} itemscope itemtype="http://schema.org/ImageGallery">
+
+    <!-- You may need to sort the "figure" elements manually – they are in folder sort order! -->
+
+EOF
+
+
+# handle single file
+handlefile() {
+  i=$(basename "$1") # clean out leading "./"
+  echo "Processing \"${i}\" … "
+
+  # care for the (rare) cases with UPPERCASE file extension:
+  # go and rename to lowercase extension.
+  if [[ "$i" = *.* ]]; then
+    ib="${i%.*}"  # get basename
+    ix="${i##*.}" # get extension
+    ixl="${ix,,}" # make lowercase (requires recent bash)
+    if [[ "$ix" != "$ixl" ]]; then
+      mv "$i" "$ib.$ixl"
+      i="$ib.$ixl"  # modify "$i" for script below
+    fi
+  fi
+
+  # Fetch som data directly from the (original) image
+  # Use HTML escaping (-E) for exiftool, for safety reasons – otherwise
+  # quotes and other "odd" characters in the image tags might break the code!
+  # You might want to use "skip minor errors" (=tag not found) option: -m
+
+  # How a line is tokenized depends on the IFS variable.
+  # It usually contains a tab, a space and a newline,
+  # but we want tokenizing only on \t (thats what we make exiftool output).
+  # Setting it inside the "while" keeps it local so we don’t have to unset later.
+
+  # To avoid many (slow) calls to exiftool, we try to read all values
+  # into variables in one or two runs.
+  # Options used:
+  #   -E - output HTML-safe
+  #   -T - output tab-delimited
+  #   -d "%FT%T" - set ISODATE format
+  # For each variable NOT found, exiftool will return a dash "-".
+  # We can’t pipe into the while, because the variables would get lost
+  # when coming back from the sub-shell, so we use process substitution.
+  # "dummy" is used just in case we need to "eat" the rest of the line.
+
+  IFS=$'\t' read EXIF_ARTIST BYLINE CREATOR CREDIT PUBLISHER \
+    EXIF_IMAGEDESCRIPTION CAPTION_ABSTRACT DESCRIPTION HEADLINE OBJECTNAME \
+    TITLE KEYWORDS SUBJECT EXIF_COPYRIGHT COPYRIGHTNOTICE RIGHTS ISODATE \
+    LAT LON DIR ALT XPCOMMENT dummy \
+    < \
+    <(exiftool -E -T -d "%FT%T" \
+      -exif:artist -by-line -creator -credit -publisher -exif:imagedescription \
+      -caption-abstract -description -headline -objectname -title -keywords \
+      -subject -exif:copyright -copyrightnotice -rights -dateTimeOriginal \
+      -gpslatitude# -gpslongitude# -gpsimgdirection# -gpsaltitude# -xpcomment \
+      "$i")
+
+
+  # FIXME: diags only, remove after testing
+  #echo
+  #echo "exif:artist: $EXIF_ARTIST"
+  #echo "by-line: $BYLINE"
+  #echo "creator: $CREATOR"
+  #echo "credit: $CREDIT"
+  #echo "publisher: $PUBLISHER"
+  #echo "exif:imagedescription: $EXIF_IMAGEDESCRIPTION"
+  #echo "caption-abstract: $CAPTION_ABSTRACT"
+  #echo "description: $DESCRIPTION"
+  #echo "headline: $HEADLINE"
+  #echo "objectname: $OBJECTNAME"
+  #echo "title: $TITLE"
+  #echo "keywords: $KEYWORDS"
+  #echo "subject: $SUBJECT"
+  #echo "exif:copyright: $EXIF_COPYRIGHT"
+  #echo "copyrightnotice: $COPYRIGHTNOTICE"
+  #echo "rights: $RIGHTS"
+  #echo "datetimeoriginal (ISO): $ISODATE"
+  #echo "location: ${LAT},${LON} (${ALT}m Höhe, Blickrichtung ${DIR}°)"
+  #echo "XPcomment: $XPCOMMENT"
+
+  # And one more call to read the date in our user format, since
+  # exiftool doesn't like TWO -d options on one invocation.
+  # Returns empty string (not "-") if not set.
+  DATE=$(exiftool -if '$dateTimeOriginal' \
+    -d "$DATEFORMAT" -p '$dateTimeOriginal' "$i" 2> /dev/null)
+
+  # CREATOR (-exif:artist, -by-line, -creator)
+  if  [ "$EXIF_ARTIST" != "-" ]; then
+    CREATOR="$EXIF_ARTIST"
+  elif [ "$BYLINE" != "-" ]; then
+    CREATOR="$BYLINE"
+  elif [ "$CREATOR" != "-" ]; then
+    CREATOR="$CREATOR"
+  else
+    CREATOR=""
+  fi
+
+  # CREDIT (-credit, -publisher)
+  if [ "$CREDIT" != "-" ]; then
+    CREDIT="$CREDIT"
+  elif [ "$PUBLISHER" != "-" ]; then
+    CREDIT="$PUBLISHER"
+  else
+    CREDIT=""
+  fi
+
+  # DESCRIPTION (-exif:imagedescription, -caption-abstract, -description, -xpcomment)
+  if [ "$EXIF_IMAGEDESCRIPTION" != "-" ]; then
+    DESCRIPTION="$EXIF_IMAGEDESCRIPTION"
+  elif [ "$CAPTION_ABSTRACT" != "-" ]; then
+    DESCRIPTION="$CAPTION_ABSTRACT"
+  elif [ "$DESCRIPTION" != "-" ]; then
+    DESCRIPTION="$DESCRIPTION"
+  elif [ "$XPCOMMENT" != "-" ]; then
+    DESCRIPTION="$XPCOMMENT"
+  else
+    DESCRIPTION=""
+  fi
+
+  # HEADLINE (-headline), fallback to TITLE (-objectname, -title)
+  if [ "$HEADLINE" != "-" ]; then
+    HEADLINE="$HEADLINE"
+  elif [ "$OBJECTNAME" != "-" ]; then
+    HEADLINE="$OBJECTNAME"
+  elif [ "$TITLE" != "-" ]; then
+    HEADLINE="$TITLE"
+  else
+    HEADLINE=""
+  fi
+
+  # set FIGURE_TITLE to HEADLINE if not empty
+  if [ "$FIGURE_TITLE" = "" ]; then
+    FTITLE="$HEADLINE"
+  else
+    FTITLE="$FIGURE_TITLE"
+  fi
+
+  # KEYWORDS/TAGS (-keywords, -subject)
+  if [ "$KEYWORDS" != "-" ]; then
+    KEYWORDS="$KEYWORDS"
+  elif [ "$SUBJECT" != "-" ]; then
+    KEYWORDS="$SUBJECT"
+  else
+    KEYWORDS=""
+  fi
+
+  # COPYRIGHT (-exif:copyright, -copyrightnotice, -rights)
+  if [ "$EXIF_COPYRIGHT" != "-" ]; then
+    COPYRIGHT="$EXIF_COPYRIGHT"
+  elif [ "$COPYRIGHTNOTICE" != "-" ]; then
+    COPYRIGHT="$COPYRIGHTNOTICE"
+  elif [ "$RIGHTS" != "-" ]; then
+    COPYRIGHT="$RIGHTS"
+  else
+    COPYRIGHT=""
+  fi
+
+  # DATE OF ORIGINAL IMAGE (-dateTimeOriginal)
+  if [ "$ISODATE" = "-" ]; then
+    ISODATE=""
+  fi
+
+  # LOCATION (-gpslatitude, -gpslongitude, -gpsimgdirection)
+  # in WGS84 format, like Google Maps uses
+  LOCATION=""
+  if [ "${LAT}" != "-" ] && [ "${LON}" != "-" ]; then
+    LOCATION="${LAT},${LON}"
+  fi
+
+  # texts to include in caption
+  HEADLINE_TEXT=""
+  if [ -n "$HEADLINE" ]; then
+    if [ -n "$HEADLINE_TAG" ]; then
+      HEADLINE_TEXT="<${HEADLINE_TAG}>${HEADLINE}</${HEADLINE_TAG}>"
+    else
+      HEADLINE_TEXT="${HEADLINE}<br>"
+    fi
+  fi
+
+  DATE_TEXT=""
+  if [ "$USE_DATE" = true ] && [ -n "$DATE" ]; then
+    DATE_TEXT="<span itemprop=\"dateCreated\" content=\"${ISODATE}\">${DATE}</span>"
+    if [ -n "$DESCRIPTION" ]; then
+      DATE_TEXT="${DATE_TEXT}${DATE_LEADOUT}"
+    fi
+  fi
+
+  if [ -n "$CREATOR" ] && [ -n "$CREDIT" ]; then
+    CREDITS_TEXT="${CREDITS_LEADIN}${CREATOR} / ${CREDIT}${CREDITS_LEADOUT}"
+  elif [ -n "$CREATOR" ]; then
+    CREDITS_TEXT="${CREDITS_LEADIN}${CREATOR}${CREDITS_LEADOUT}"
+  elif [ -n "$CREDIT" ]; then
+    CREDITS_TEXT="${CREDITS_LEADIN}${CREDIT}${CREDITS_LEADOUT}"
+  else
+    CREDITS_TEXT=""
+  fi
+
+  MAPLINK=""
+  if [ "$USE_MAPS" = true ] && [ -n "$LOCATION" ]; then
+    if [ "$MAPLINK_BR" = true ]; then
+      MAPLINK="<br>"
+    fi
+    MAPLINK="${MAPLINK}<a href=\"${MAPFORMAT}${LOCATION}\" rel=\"nofollow\" target=\"_blank\">${MAPLINK_TEXT}</a>"
+  fi
+
+  if [ -n "$CONTENT_TAG" ]; then
+    CAPTION="${HEADLINE_TEXT}<${CONTENT_TAG}>${DATE_TEXT}${DESCRIPTION}${CREDITS_TEXT}</${CONTENT_TAG}>${MAPLINK}"
+  else
+    CAPTION="${HEADLINE_TEXT}${DATE_TEXT}${DESCRIPTION}${CREDITS_TEXT}${MAPLINK}"
+  fi
+
+
+  # construct (default) image path for image to be linked to
+  F_PATH="${DIR_NAME}${i}" # original image
+
+  # get original image dimensions and size
+  AREA=$(identify -format "%wx%h" "${F_PATH}" 2> /dev/null)
+  WIDTH=${AREA%x*}
+  FSIZE=$(du -sh "${F_PATH}" | cut -f 1 2> /dev/null)
+
+  # Go convert into each desired image format (separate folders).
+  # For instance, an "s" image will be called s/origfilename.s.ext.
+  # Actually a safety measure in case somebody wants all of them in one folder.
+  # While we are at it, we also set the image’s "IMAGE_LINKTO" F_PATH
+  # and thus save an extra loop iteration later on.
+  f=0
+  while [ "x${F_NAME[f]}" != "x" ]; do
+
+    echo -n "  - ${F_NAME[f]}: "
+
+    F_FNAME[f]="${i%.*}.${F_NAME[f]}.${i##*.}"
+    if [ ! -s "${F_NAME[f]}/${F_FNAME[f]}" ]; then
+      convert ${F_CONV[f]} "$i" "${F_NAME[f]}/${F_FNAME[f]}"
+    fi
+    F_AREA[f]=$(identify -format "%wx%h" "${F_NAME[f]}/${F_FNAME[f]}" 2> /dev/null)
+    F_WIDTH[f]=${F_AREA[f]%x*}
+    F_FSIZE[f]=$(du -sh "${F_NAME[f]}/${F_FNAME[f]}" | cut -f 1)
+
+    echo "${F_AREA[f]}, ${F_FSIZE[f]}"
+
+    # also check (and maybe set) F_PATH and (different) image dimensions, size
+    if [ "$IMAGE_LINKTO" != "" ] && [ "${F_NAME[f]}" = "$IMAGE_LINKTO" ]; then
+      F_PATH="${DIR_NAME}${F_NAME[f]}/${F_FNAME[f]}"
+      # get new "original" image dimensions and size
+      AREA="${F_AREA[f]}"
+      WIDTH="${F_WIDTH[f]}"
+      FSIZE="${F_FSIZE[f]}"
+    fi
+
+    f=$(( $f + 1 ))
+  done
+
+  echo "Size: $AREA, $FSIZE"
+  echo "$HEADLINE"
+  echo "$DATE – $CREDITS_TEXT"
+
+
+  if [ "$USE_SQUARE_THUMBS" = true ]; then
+  # make a SQUARE (and cropped) thumbnail as figure entry, pointing to the hi-res original
+  # which PhotoSwipe can read out
+cat >> "${GALLERY_PATH}" <<EOF
+    <!-- ${i} (${AREA}px) - cropped, square thumbnail with link to original image -->
+    <!-- Image copyright: ${COPYRIGHT} -->
+    <!-- Image location: ${LOCATION} Height: ${ALT}m Viewing direction: ${DIR}° -->
+    <figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="$FTITLE">
+      <a href="${ROOT}$(urlenc "${F_PATH}")" itemprop="contentUrl" data-size="${AREA}">
+        <img src="${ROOT}$(urlenc "${DIR_NAME}${F_NAME[1]}/${F_FNAME[1]}")" itemprop="thumbnail" alt="${HEADLINE}">
+      </a>
+      <figcaption itemprop="caption description" title="${HEADLINE}">${CAPTION}</figcaption>
+    </figure>
+
+EOF
+  else
+  # make a thumbnail as figure entry, pointing to the hi-res original
+  # which PhotoSwipe can read out
+cat >> "${GALLERY_PATH}" <<EOF
+    <!-- ${i} (${AREA}px) - thumbnail with link to original image -->
+    <!-- Image copyright: ${COPYRIGHT} -->
+    <!-- Image location: ${LOCATION} Height: ${ALT}m Viewing direction: ${DIR}° -->
+    <figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="$FTITLE">
+      <a href="${ROOT}$(urlenc "${F_PATH}")" itemprop="contentUrl" data-size="${AREA}">
+        <img src="${ROOT}$(urlenc "${DIR_NAME}${F_NAME[0]}/${F_FNAME[0]}")" itemprop="thumbnail" alt="${HEADLINE}">
+      </a>
+      <figcaption itemprop="caption description" title="${HEADLINE}">${CAPTION}</figcaption>
+    </figure>
+
+EOF
+  fi
+
+  # As a reference for "normal" images that occur on pages,
+  # also make a default img entry, with a srcset.
+  # This is the best method (also for Retina displays) to
+  # let the browser decide which image to load.
+cat >> "${GALLERY_PATH}" <<EOF
+    <!-- ${i} (${AREA}px) - "normal" image on a page, with a srcset (responsive loading) -->
+    <!-- Image copyright: ${COPYRIGHT} -->
+    <!-- Image location: ${LOCATION} Height: ${ALT}m Viewing direction: ${DIR}° -->
+EOF
+
+  # comment out the "real" image for Foundation 6 sites
+  if [ "$F6" = true ]; then
+    echo "    <!--" >> "${GALLERY_PATH}"
+  fi
+
+cat >> "${GALLERY_PATH}" <<EOF
+    <figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="$FTITLE">
+      <img srcset="
+EOF
+
+  # make a "srcset" that contains all sizes we defined
+  # start at index 2 (since 0 and 1 are used for thumbnails)
+  f=2
+  while [ "x${F_NAME[f]}" != "x" ]; do
+    echo -n "          ${ROOT}$(urlenc "${DIR_NAME}${F_NAME[f]}/${F_FNAME[f]}") ${F_WIDTH[f]}w" >> "${GALLERY_PATH}"
+    f=$(( $f + 1 ))
+    # add a comma if there is more to come
+    if [[ "x${F_NAME[f]}" != "x"  ]]; then
+      echo -n "," >> "${GALLERY_PATH}"
+    fi
+    echo >> "${GALLERY_PATH}"
+  done
+
+cat >> "${GALLERY_PATH}" <<EOF
+          "
+        src="${ROOT}$(urlenc "${DIR_NAME}${F_NAME[2]}/${F_FNAME[2]}")"
+        sizes="
+EOF
+
+  # TODO: Either leave this out or find out more about it …
+  # make "sizes" entries that contain all sizes we defined
+  # must work backwards, since the first match is taken by the browser!
+  # start at index (length-1), end at index 2 (0 and 1 reserved for thumbs)
+  #f=$(( ${#F_NAME[@]} - 1 ))
+  #while [ "$f" -ge "2" ]; do
+  #  echo "          (min-width: ${F_BREAKPOINT[f]}) ${F_WIDTH[f]}px," >> "${GALLERY_PATH}"
+  #  f=$(( $f - 1 ))
+  #done
+
+cat >> "${GALLERY_PATH}" <<EOF
+          100vw"
+        alt="${HEADLINE}">
+      <figcaption itemprop="caption description" title="${HEADLINE}">${CAPTION}</figcaption>
+    </figure>
+EOF
+
+  # comment out the "real" image for Foundation 6 sites
+  if [ "$F6" = true ]; then
+    echo "    -->" >> "${GALLERY_PATH}"
+  else
+    echo >> "${GALLERY_PATH}"
+    echo "    <hr>" >> "${GALLERY_PATH}"
+  fi
+
+  echo >> "${GALLERY_PATH}"
+
+  echo
+}
+
+
+# for each image found (in this folder, NOT in subfolders!), generate some code
+# We need this complicated construct for files containing special characters
+# like whitespace and/or newlines.
+# And we need a "sort" that supports the "-z" option to sort zero-terminated strings.
+#
+while IFS= read -r -d '' i; do
+  handlefile "$i"
+done < <(find . -maxdepth 1 \( -iname '*.jp*g' -o -iname '*.png' \
+  -o -iname '*.gif' -o -iname '*.mpo' \) -type f -print0 | sort -z)
+
+
+cat >> "${GALLERY_PATH}" <<EOF
+  </section>
+</div>
+<!-- End Gallery "${GALLERY_NAME}" - created: ${NOW} -->
+EOF
+
+
+# If generating a gallery test page (not a Foundation 6 partial),
+# add some more information
+# and close the barebones page wrapper.
+if [ "$F6" != true ]; then
+
+cat >> "${GALLERY_PATH}" <<EOF
+
+    <h2 id="info">Just great! How does it work?</h2>
+    <p>Pretty easy. You need a system with a <em>bash</em> shell and
+      <em>exiftool</em>, <em>ImageMagick</em> and <em>Python</em> installed.</p>
+    <p>Then follow these <strong>five simple steps</strong>:</p>
+    <ol>
+      <li>Get hold of my script, save it to a place where the system can find it
+        (I recommend <kbd>~/bin</kbd> on Linux systems), and give it execute rights
+        (<kbd>chmod +x makethumbsf6</kbd>). This step is only needed once.</li>
+      <li>Copy all images you want for any one gallery page into a folder. (If
+        you are working with Zurb’s <em>Foundation 6</em> framework, this is
+        most probably something like <kbd>projectfolder/src/assets/img/gallery/album-01</kbd>.)
+      </li>
+      <li>Add all extra image information you want or need directly into the images,
+        using a tool like <em>exiftool</em>. If you have nothing else (like
+        maybe Adobe PhotoShop or Lightroom), you can even use Mac OSX’s Finder,
+        or the Windows Image Properties dialog. (If you are unsure, you can
+        skip this step and do it later. Then simply run my script again.)</li>
+      <li>Open a shell (or command prompt), change to the folder containing the
+        images, and run <kbd>makethumbsf6</kbd>. This will take a moment while it
+        generates thumbnails and optimized smaller images in subfolders called
+        <kbd>t</kbd>, <kbd>ts</kbd>, <kbd>s</kbd>, <kbd>m</kbd>, <kbd>l</kbd> and <kbd>xl</kbd>. These will contain thumbnails,
+        squared/cropped thumbnails, and small, medium, large and extra-large
+        versions of your images, respectively.</li>
+      <li>The script also generates a HTML test page like this one, called <kbd>gallery-path-name.html</kbd>.
+        (If it detects you are working in a Foundation 6 directory structure,
+        it will instead generate a
+        <em>partial</em> called <kbd>gallery-path-name.html</kbd>. This can later
+        be directly included in your page using Panini’s
+        <kbd>{{> gallery-path-name gid=1}}</kbd>.)</li>
+    </ol>
+    <p><strong>Et voilà!</strong> My script has done its magic, and you can use
+      the results however you wish. Copy <strong>optimized</strong>,
+      <strong>responsive</strong> and <strong>SEO-friendly</strong>
+      code from this sample page, or watch the <em>live</em> changes in your
+      Foundation 6 workflow (if <kbd>foundation watch</kbd> is being run).</p>
+
+    <h2>Now how does it <em>really</em> work?</h2>
+    <p>I mainly extract a lot of information from the images and build a HTML5/CSS3/Foundation
+      6 compatible source from it.</p>
+    <p>Since doing all that manually can be a lot of work (and quite error-prone),
+      my script takes the hassle out of it and does most of the work for you.</p>
+    <p>From your original images (which are never changed), I also build thumbnails
+      and smaller, web-optimized versions for responsive delivery. That means,
+      on a mobile device you’ll get smaller images than on a large desktop.
+      It makes delivering over low-bandwith connections
+      <strong>blazingly fast</strong> while you don’t have to do all the work
+      manually!</p>
+    <p>The mechanisms I use (<kbd>img</kbd> <kbd>srcset</kbd>s and <kbd>sizes</kbd>)
+      also work great with <em>Retina</em> displays (2x), because eventually
+      <em>the browser intelligently decides which image to load</em>. Even
+      rotating a mobile device by 90° is no problem anymore—you’ll always get
+      <em>the smallest and best quality image</em> delivered.</p>
+    <p><strong>No Javascript involved</strong>—if you don’t want it. Nevertheless,
+      the image markup generated works just great with many available JS lightbox
+      scripts, like <em>PhotoSwipe</em> (which I recommend because it has great
+      mobile features and is framework-independent).
+    </p>
+
+    <h2>Almost everything is configurable</h2>
+    <p>Not enough yet? You can change almost anything, with a few keystrokes:</p>
+    <ul>
+      <li>Use uncropped, regular thumbnails? Set <kbd>USE_SQUARE_THUMBS=false</kbd>.</li>
+      <li>Don’t show the date the image was taken? Set <kbd>USE_DATE=false</kbd>.</li>
+      <li>Another date/time format? Modify <kbd>DATEFORMAT='%d.%m.%Y'</kbd>.</li>
+      <li>No &lt;h4&gt; for caption headlines? Modify <kbd>HEADLINE_TAG='h4'</kbd>.</li>
+      <li>Another class and text for image rights? Modify <kbd>CREDITS_LEADIN</kbd> and
+        <kbd>CREDITS_LEADOUT</kbd>.
+      </li>
+      <li>Another service provider for map displays? Modify <kbd>MAPFORMAT</kbd>.</li>
+      <li>Need other breakpoints/image sizes? Modify the <kbd>F_NAME</kbd>,
+        <kbd>F_BREAKPOINT</kbd> and <kbd>F_CONV</kbd> arrays.</li>
+      <li>More (or less) image formats? Just add to/remove from the
+        <kbd>F_NAME</kbd>, <kbd>F_BREAKPOINT</kbd> and <kbd>F_CONV</kbd> arrays.
+        Adapt <kbd>IMAGE_LINKTO</kbd>.</li>
+      <li>Want to fine-tune the image conversion (quality, size, filter, …)?
+        Modify the <kbd>F_CONV</kbd> array—separately for each image type and size!</li>
+    </ul>
+
+    <h2>Documentation, please …?</h2>
+    <p><strong>Still not enough?</strong> Study the code of this <em>single
+      bash script</em>. It is very well documented and can be opened with any
+      text editor than can read/write UTF-8 encoded text files.</p>
+    <p>Change to your heart’s content. Fork <em>makethumbsf6</em> on GitHub and
+      make a pull request if you feel that you added something of general interest,
+      or improved it!</p>
+    <p>Some more hints:</p>
+    <ul>
+      <li>To save some work, especially when generating <em>partials</em> for
+        <em>Foundation 6</em>, I recommend <em>naming the images in the sequence
+        they should be presented in the gallery later on</em>. You will save
+        the work of manually rearranging images in the partial everytime
+        you re-run the script. It’s still possible to use good image names for
+        SEO, just name them something like <kbd>010-webdesign-krumbach.jpg</kbd>
+        or even <kbd>010 Webdesign in Krumbach.jpg</kbd> (Yes, even blanks and
+        other <em>odd characters are allowed</em>!). Maybe start in steps of
+        10 so you can add images in between later on.</li>
+      <li><em>Makethumbsf6</em> is quite fast, but converting lots of large
+        images can take time. So if a small image version <em>already exists</em>,
+        it <em>won’t convert it again</em> but just re-create the HTML. So if
+        you changed the original image’s data, or something in the conversion
+        process like the <kbd>F_…</kbd> array, just <em>delete all generated
+        subfolders</em> and <em>makethumbsf6</em> will re-create all responsive
+        image versions again.</li>
+      <li>This also allows for hassle-free <em>adding of just some images</em>:
+        Just run the script and it will create the responsive versions of
+        <em>only the newly added images</em>.</li>
+      <li>Image data is a nightmare, and nobody follows all standards, or agree
+        upon them even. Never open Pandora’s box … sigh.</li>
+      <li>In evaluating (and recommending) image tags that might occur in different
+        places, I follow a route most professionals also recommend:
+        <em>EXIF</em> first, <em>IPTC</em> second, <em>XMP:dc</em> last.
+        <em>Exiftool</em> also follows this route.</li>
+      <li>For what’s needed to display meaningful data on a web page, I do try
+        to read as many tags as might be needed, mostly having several fallbacks.
+        For instance, reading the copyright notice, I first check the EXIF
+        Copyright, fall back to the IPTC Copyright Notice, and if that also
+        fails try to read the XMP:dc Rights field.
+      </li>
+      <li>Adobe (except for Lightroom) seem to prefer XMP:dc over EXIF and IPTC,
+        Apple products generelly like IPTC, Nikon prefer EXIF and IPTC, and
+        almost all news agencies (ap, dpa, Reuters) use IPTC extensively.</li>
+      <li>Personally, I prefer EXIF for some fields (like DateTimeOriginal, Artist
+        and Copyright), since modern cameras can <em>set these within
+        the camera</em> so you don’t have to tag every image manually. For
+        everything else, I strongly prefer IPTC since it’s very well defined
+        and used by news agencies. Presenting image data on a web site
+        <em>is</em> news, don’t you think? And who knows, maybe you can even
+        sell some of your photographs to a newspaper–wouldn’t it be great to
+        <em>already have all needed information</em> stored in the right places?</li>
+      <li>The <em>PhotoSwipe</em> Javascript lighbox: Just set
+        <kbd>USE_LIGHTBOX=true</kbd>, run the script again and study the
+        code. You might also want to check out http://photoswipe.com/.</li>
+      <li>About foreign characters in the filesystem and on the web: You <em>can</em>,
+        as demonstrated here, if you work with Linux. Linux supports UTF-8 in
+        the filesystem just fine, which allows for blanks and all sorts of fancy
+        characters. Be aware if part of your production chain is on Windows,
+        though: Modern Windows systems might <em>display</em> the names
+        correctly but applications could still crap out. I
+        recommend using ASCII-only filenames in this case (i.e. "ö" →
+        "oe" and so forth).</li>
+      <li><strong>Before going to production</strong> you might want to check
+        your original images for unwanted internal data and probably remove such
+        (use <em>exiftool</em>). <strong>Do not</strong> erase the data you
+        want to be shown on the web page! In any case, as a <strong>last step</strong>,
+        delete all subfolders <em>makethumbsf6</em> generated and run the script
+        again, so all images (and their data!) are updated before publication
+        on the web.</li>
+      <li>I tried to make the script as safe and »unbreakable« as possible (you
+        can even use fancy filenames with umlauts, apostrophes and the like!).
+        Nevertheless, always <strong>make a backup first</strong>—I’m not
+        responsible if something breaks and costs you a million pounds, dollars,
+        euros …</li>
+    </ul>
+
+    <h3>Working with Zurb’s <em>Foundation 6</em> framework</h3>
+    <ol>
+    <li>Serve the PhotoSwipe files locally.
+      <a href="https://github.com/dimsemenov/PhotoSwipe" target="_blank">Download them</a>
+      and put the contents of the <kbd>dist</kbd> folder into a newly-created
+      <kbd>src/assets/photoswipe/</kbd> folder.</li>
+    <li>Study this HTML file (search for <kbd>&lt;!-- PhotoSwipe custom code:</kbd>)
+      and copy-paste the code between the next <kbd>&lt;script&gt;</kbd> and
+      <kbd>&lt;/script&gt;</kbd> tags into a separate file
+      <kbd>src/assets/photoswipe/photoswipe-custom.js</kbd>.</li>
+    <li>Search for <kbd>&lt;!-- Start PhotoSwipe code --&gt;</kbd> and copy-paste from
+      this line and up to—but not including—the line
+      <kbd>&lt;!-- PhotoSwipe Javascript (delivered from CDN for standalone) --&gt;</kbd>
+      into a new file <kbd>src/partials/gallery.html</kbd>. At the end of that
+      new file, add the following lines:<br>
+      <kbd>&lt;!-- PhotoSwipe Javascript --&gt;</kbd><br>
+      <kbd>&lt;script src="{{root}}assets/photoswipe/photoswipe.min.js"&gt;&lt;/script&gt;</kbd><br>
+      <kbd>&lt;script src="{{root}}assets/photoswipe/photoswipe-ui-default.min.js"&gt;&lt;/script&gt;</kbd><br>
+      <kbd>&lt;!-- PhotoSwipe custom code: Get gallery from DOM --&gt;</kbd><br>
+      <kbd>&lt;script src="{{root}}assets/photoswipe/photoswipe-custom.js"&gt;&lt;/script&gt;</kbd><br>
+      <kbd>&lt;!-- End PhotoSwipe code  --&gt;</kbd>
+      </li>
+    <li>Create a gallery page, let’s call it <kbd>src/pages/gallerypage.html</kbd>.</li>
+    <li>Modify your <kbd>src/layouts/default.html</kbd>’s <kbd>&lt;head&gt;</kbd>
+      area to include the Photoswipe CSS files:<br>
+      <kbd>{{#ifpage 'gallerypage'}}</kbd><br>
+      <kbd>&lt;!-- gallery page(s) --&gt;</kbd><br>
+      <kbd>&lt;link rel="stylesheet" href="{{root}}assets/photoswipe/photoswipe.min.css"&gt;</kbd><br>
+      <kbd>&lt;link rel="stylesheet" href="{{root}}assets/photoswipe/default-skin/default-skin.min.css"&gt;</kbd><br>
+      <kbd>{{/ifpage}}</kbd>
+      </li>
+    <li><strong>— Take a break. — Steps 1 thru 5 only need to be done once.</strong></li>
+    <li>Make a folder for your first album:
+      <kbd>src/assets/img/gallery/album-01</kbd> and put some original photos there.</li>
+    <li>In a terminal (command prompt), <kbd>cd</kbd> to your album folder, i.e.
+      <kbd>cd ~/projects/test/src/assets/img/gallery/album-01</kbd>. Or use your
+      file manager, right-click on the subfolder <kbd>album-01</kbd> and select
+      "Open terminal here" (the wording can differ a little between desktop
+      environments).</li>
+    <li>In this folder, on the command line, run <kbd>makethumbsf6</kbd>. It will
+      automatically detect that you run it within a <em>Foundation 6</em>
+      folder structure and output some information while it proceeds, creating
+      the miscellaneous subfolders and images for different resolutions.</li>
+    <li>When <em>makethumbsf6</em> is finished, it will have created a new
+      gallery <em>partial</em> for you, called
+      <kbd>src/partials/gallery-gallery-album-01.html</kbd> in this example.</li>
+    <li>In the new gallery page created above (<kbd>src/pages/gallerypage.html</kbd>),
+      somewhere near the end, now add some Panini code to include your new gallery album:<br>
+      <kbd>{{!-- include gallery/galleries created by makethumbsf6 --}}</kbd><br>
+      <kbd>{{!-- specify "gid=#" if using more than one gallery on one single page --}}</kbd><br>
+      <kbd>{{&gt; gallery-gallery-album-01 gid=1}}</kbd><br>
+      <br>
+      <kbd>{{!-- include PhotoSwipe code --}}</kbd><br>
+      <kbd>{{&gt; gallery}}</kbd><br>
+      <br>
+      <kbd>&lt;!-- end content --&gt;</kbd>
+      </li>
+    <li><strong>Done!</strong> You now have a perfectly running gallery, with
+      a low-footprint, fast and feature-rich lightbox!</li>
+    <li>If you have <kbd>foundation watch</kbd> running, you can even watch the
+      live page updating the gallery whenever you re-run <kbd>makethumbsf6</kbd>
+      in your album folder! Remember that <em>makethumbsf6</em> will neither erase
+      or recreate images already built (this helps speeding things up), so if you
+      change images and/or their data, you might want to manually remove the
+      subfolders under <kbd>album-01</kbd> in order to force <em>makethumbsf6</em>
+      building a fresh set.</li>
+    <li>Now you can play around and optimize your new gallery to your heart’s
+      content. You may want to modify some settings within <em>makethumbsf6</em>
+      itself, or even modify <kbd>src/partials/gallery.html</kbd> or
+      <kbd>src/assets/photoswipe/photoswipe-custom.js</kbd>. <strong>The
+      possibilities are endless—enjoy!</strong></li>
+    <li>N.B.: Use <kbd>exiftool</kbd> to enter all relevant data into your images
+      and have <em>makethumbsf6</em> create beautiful captions, with headlines
+      and map links even, <strong>all automatic and SEO-optimized!</strong></li>
+    </ol>
+
+    <h3>Some <em>exiftool</em> commands I recommend to get going</h3>
+    <dl>
+      <dt><strong>Set photographer/artist name</strong> for all <kbd>*.jpg</kbd> in a folder:</dt>
+      <dd><kbd>exiftool -by-line="Alfred E. Newman" *.jpg</kbd><br>
+        <em>Note:</em> Some modern cameras can set the photographer’s name in the EXIF data.
+        Should you need to overwrite that, use the following instead:<br>
+        <kbd>exiftool -exif:artist="Alfred E. Newman" *.jpg</kbd></dd>
+
+      <dt><strong>Set credits</strong> (stock photo or other agency, company) for single image:</dt>
+      <dd><kbd>exiftool -credit="M. Hormann Webdesign" "999-Matthias C. Hormann - Der Problemlöser.jpg"</kbd><br>
+        (Image filename in apostrophes since it contains blanks.)</dd>
+
+      <dt><strong>Set headline</strong> for a single image:</dt>
+      <dd><kbd>exiftool -headline="Eiseskälte in Bad Grönenbach" "040-winter-in-bad-grönenbach.jpg"</kbd><br>
+        (Character encoding must be UTF-8, so almost all foreign characters can be used.)</dd>
+
+      <dt><strong>Set caption text</strong> (description) for an image:</dt>
+      <dd><kbd>exiftool -caption-abstract="Long description (up to 2000 chars) …" 052-the-coding-phase.jpeg</kbd></dd>
+
+      <dt><strong>Set copyright notice</strong> for all <kbd>*.jpg</kbd> images in a folder:</dt>
+      <dd><kbd>exiftool -copyrightnotice="Copyright © 2017 Matthias C. Hormann, all rights reserved." *.jpg</kbd><br>
+        <em>Note:</em> Some modern cameras can set a copyright notice in the EXIF data.
+        Should you need to overwrite that, use the following instead:<br>
+        <kbd>exiftool -exif:copyright="Copyright © 2017 Matthias C. Hormann, all rights reserved." *.jpg</kbd></dd>
+
+      <dt><strong>Erase location data (GPS)</strong> so it won’t be published (and no automatic map links generated):</dt>
+      <dd><kbd>exiftool -gps:all= "040-winter-in-bad-grönenbach.jpg"</kbd><br>
+        <strong>Caution: You cannot get this information back (except from a backup)!</strong>
+        A better way might be to just set <kbd>USE_MAPS=false</kbd> in the script.</dd>
+
+      <dt><strong>Set some keywords</strong> for an image (not used in this script but might be handy elsewhere):</dt>
+      <dd><kbd>exiftool -keywords="webdesign,problem solver,programming,linux" "999-Matthias C. Hormann - Der Problemlöser.jpg"</kbd></dd>
+    </dl>
+
+    <h2>Wow! What does it cost?</h2>
+    <p>Short answer? <strong>Nothing.</strong> It’s <em>Free and Open-Source
+      Software (FOSS)</em> and MIT-licensed, so you can almost do what you
+      want with it. Even use it for commercial purposes. I only claim that
+      you shouldn’t steal it. Just leave the examples as they are, don’t change
+      the copyrights and leave my name in. Oh well, and <em>quote</em> me,
+      maybe give a backlink.</p>
+    <p>This took several weeks to make and debug, and is still being actively
+      debugged (and used everyday).</p>
+
+    <h3 id="donate">Buy me a beer instead?</h3>
+    <p>Don’t feel obliged. You don’t have to. But if I could help you, why not help back? <em>You’ll get this warm, fuzzy feeling inside and you’ll know that you’ve moved something …</em> :-)</p>
+    <ul>
+      <li>Buy me <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11346898" target="_blank" title="Buy me a beer! (Paypal, €&nbsp;3.90)">a beer</a>,
+      <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347235" target="_blank" title="Buy me a cappucino! (Paypal, €&nbsp;3.50)">a cappuccino</a>,
+      or <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347307" target="_blank" title="Buy me a glass of red wine! (Paypal, €&nbsp;5.90)">a glass of red wine</a>!</li>
+      <li>Send me something from my <a href="http://www.amazon.de/gp/redirect.html?ie=UTF8&amp;location=http%3A%2F%2Fwww.amazon.de%2Fgp%2Fregistry%2Fwishlist%2FK8T279QJ5LUA&amp;site-redirect=de&amp;tag=computepartnerma&amp;linkCode=ur2&amp;camp=1638&amp;creative=19454" target="_blank" title="Buy me something from my Amazon wishlist! (Amazon.de)">Amazon wishlist</a><img src="https://www.assoc-amazon.de/e/ir?t=computepartnerma&amp;l=ur2&amp;o=3" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;">!</li>
+      <li>Or just donate as much as you feel like (Paypal; <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347390" target="_blank" title="Donate (Paypal, any amount in Euros)">EUR</a>,
+      <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348209" target="_blank" title="Donate (Paypal, any amount in US$)">USD</a>,
+      <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348311" target="_blank" title="Donate (Paypal, any amount in Canadian Dollars)">CAD</a>,
+      <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348355" target="_blank" title="Donate (Paypal, any amount in Pound Sterling)">GBP</a> accepted).</li>
+    </ul>
+    <p><strong>Thank you!</strong> I really appreciate it, and it’ll certainly help keeping more nice things coming!</p>
+
+    <p><strong>Script »makethumbsf6« Copyright © 2017 Matthias C. Hormann.
+      All rights reserved. Urheberrechtlich geschützt, alle Rechte
+      vorbehalten.</strong></p>
+
+    <h2>All this wouldn’t have been possible without …</h2>
+    <ul>
+      <li><em>Linux</em>. The best operating system around, if you want to be
+        stable and productive.</li>
+      <li>Phil Harvey’s <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/"
+        target="_blank">Exiftool</a>. Kudos to him, and thank you. A really
+        great tool!</li>
+      <li><a href="https://www.imagemagick.org/" target="_blank">ImageMagick</a>.
+        A superb toolset for image manipulation, on Linux, Mac &amp;
+        Windows.</li>
+      <li><em>Python</em>. I love this language. Even it is »only« used for
+        URL encoding here.</li>
+      <li><a href="http://photoswipe.com/" target="_blank">PhotoSwipe</a>. Yes,
+        eventually a little Javascript. Works brilliantly with the code
+        generated by my script, and makes for a real neat UX, especially on
+        mobile devices. Kudos to Code Computerlove and Dmitry Semenov.</li>
+      <li>… and many many more. Thank you all.</li>
+    </ul>
+
+EOF
+
+  if [[ "$USE_LIGHTBOX" = true ]]; then
+cat >> "${GALLERY_PATH}" <<EOF
+    <!-- Start PhotoSwipe code  -->
+    <!-- include after the gallery DOM -->
+
+    <!-- Root element of PhotoSwipe. Must have class pswp. -->
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+      <!-- Background of PhotoSwipe.
+             It's a separate element as animating opacity is faster than rgba(). -->
+      <div class="pswp__bg"></div>
+
+      <!-- Slides wrapper with overflow:hidden. -->
+      <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides.
+                PhotoSwipe keeps only 3 of them in the DOM to save memory.
+                Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+          <div class="pswp__item"></div>
+          <div class="pswp__item"></div>
+          <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+          <div class="pswp__top-bar">
+
+            <!--  Controls are self-explanatory. Order can be changed. -->
+            <div class="pswp__counter"></div>
+            <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+            <button class="pswp__button pswp__button--share" title="Share"></button>
+            <button class="pswp__button pswp__button--fs" title="Fullscreen"></button>
+            <button class="pswp__button pswp__button--zoom" title="Zoom +/-"></button>
+
+            <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+            <!-- element will get class 'pswp__preloader--active' when preloader is running -->
+            <div class="pswp__preloader">
+              <div class="pswp__preloader__icn">
+                <div class="pswp__preloader__cut">
+                  <div class="pswp__preloader__donut"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+            <div class="pswp__share-tooltip"></div>
+          </div>
+
+          <button class="pswp__button pswp__button--arrow--left" title="Previous (←)">
+                </button>
+
+          <button class="pswp__button pswp__button--arrow--right" title="Next (→)">
+                </button>
+
+          <div class="pswp__caption">
+            <div class="pswp__caption__center"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- PhotoSwipe Javascript (delivered from CDN for standalone) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js"></script>
+
+    <!-- PhotoSwipe custom code: Get gallery from DOM -->
+    <script>
+      var initPhotoSwipeFromDOM = function(gallerySelector) {
+        var parseThumbnailElements = function(el) {
+          var thumbElements = document.querySelectorAll(gallerySelector),
+            numNodes = thumbElements.length,
+            items = [],
+            figureEl,
+            linkEl,
+            imgEl,
+            figcaptionEl,
+            size,
+            item;
+          // FIXME: remove after debugging
+          // console.log(thumbElements);
+
+          for (var i = 0; i < numNodes; i++) {
+
+            imgEl = thumbElements[i];
+            linkEl = imgEl.parentNode;
+            figureEl = linkEl.parentNode;
+            figcaptionEl = figureEl.getElementsByTagName('figcaption')[0];
+
+            size = linkEl.getAttribute('data-size').split('x');
+
+            // create slide object
+            item = {
+              src: linkEl.getAttribute('href'),
+              w: parseInt(size[0], 10),
+              h: parseInt(size[1], 10),
+            };
+
+            // get item title and text from <figcaption> if we got one
+            if (figcaptionEl) {
+              // <figcaption> content
+              item.title = figcaptionEl.innerHTML;
+
+              // used for Twitter, Pinterest sharing text:
+              // <figcaption> title if exists, otherwise content
+              if (figcaptionEl.title.length > 0) {
+                item.text = figcaptionEl.title;
+              } else {
+                // use <figcaption> content but remove all HTML tags from it
+                // add a blank between adjacent tags first, then remove all tags,
+                // which clearly makes for a much more readable output :-)
+                item.text = figcaptionEl.innerHTML.replace(/></g, "> <").replace(/<\/?[^>]+(>|$)/g, "");
+              }
+            }
+
+            // <img> thumbnail element, retrieving thumbnail url
+            // If thumbnail aspect ratio does not match large image,
+            // do not define msrc property for slide objects
+            // and enable opacity transition option
+            // (showHideOpacity:true, getThumbBoundsFn:false).
+            //item.msrc = imgEl.getAttribute('src');
+
+            item.el = imgEl; // save link to element for getThumbBoundsFn
+
+            items.push(item);
+          }
+          // FIXME: remove after debugging
+          //console.log(items);
+          return items;
+
+        }
+
+        // triggers when user clicks on thumbnail
+        var onThumbnailsClick = function(e) {
+          e = e || window.event;
+          e.preventDefault ? e.preventDefault() : e.returnValue = false;
+
+          var eTarget = e.target || e.srcElement;
+          var clickedListItem = eTarget;
+
+          // find index of clicked item
+          // you may define index via data- attribute on the <img> tag
+          // clicked gallery is the section wrapping the figure wrapping the a
+          // data-pswp-uid should have already been set (manually or by code below)
+          var clickedGallery = clickedListItem.parentNode.parentNode.parentNode,
+            index = clickedListItem.getAttribute('data-pswp-uid') -1;
+
+          // FIXME: remove after debugging
+          //console.log(clickedListItem);
+          //console.log(clickedGallery);
+          //console.log(index);
+
+          if (index >= 0) {
+            // open PhotoSwipe if valid index found
+            openPhotoSwipe(index, clickedGallery);
+          }
+          return false;
+        };
+
+        // parse picture index and gallery index from URL (#&pid=1&gid=2)
+        var photoswipeParseHash = function() {
+          var hash = window.location.hash.substring(1),
+            params = {};
+
+          if (hash.length < 5) {
+            return params;
+          }
+
+          var vars = hash.split('&');
+          for (var i = 0; i < vars.length; i++) {
+            if (!vars[i]) {
+              continue;
+            }
+            var pair = vars[i].split('=');
+            if (pair.length < 2) {
+              continue;
+            }
+            params[pair[0]] = pair[1];
+          }
+
+          if (params.gid) {
+            params.gid = parseInt(params.gid, 10);
+          }
+
+          return params;
+        };
+
+        var openPhotoSwipe = function(index, galleryElement, disableAnimation, fromURL) {
+          var pswpElement = document.querySelectorAll('.pswp')[0],
+            gallery,
+            options,
+            items;
+
+          items = parseThumbnailElements(galleryElement);
+
+          // define options (if needed)
+          options = {
+
+            // define gallery index (for URL)
+            galleryUID: galleryElement.getAttribute('data-pswp-uid'),
+
+            // If thumbnail aspect ratio does not match large image,
+            // do not define msrc property for slide objects
+            // and enable opacity transition option
+            //getThumbBoundsFn: function(index) {
+            //  // See Options -> getThumbBoundsFn section of documentation for more info
+            //  var thumbnail = items[index].el, // find thumbnail
+            //    pageYScroll = window.pageYOffset || document.documentElement.scrollTop,
+            //    rect = thumbnail.getBoundingClientRect();
+            //
+            //  return {
+            //    x: rect.left,
+            //    y: rect.top + pageYScroll,
+            //    w: rect.width
+            //  };
+            //},
+            showHideOpacity:true, // better if thumbs don’t have image aspect ratio
+
+            shareButtons: [
+                {id:'facebook', label:'<i class="fi-social-facebook"></i>&emsp;Share on Facebook', url:'https://www.facebook.com/sharer/sharer.php?u={{url}}'},
+                {id:'twitter', label:'<i class="fi-social-twitter"></i>&emsp;Tweet on Twitter', url:'https://twitter.com/intent/tweet?text={{text}}&url={{url}}'},
+                {id:'pinterest', label:'<i class="fi-social-pinterest"></i>&emsp;Pin on Pinterest', url:'http://www.pinterest.com/pin/create/button/?url={{url}}&media={{image_url}}&description={{text}}'},
+                {id:'download', label:'<i class="fi-download"></i>&emsp;Download', url:'{{raw_image_url}}', download:true}
+            ],
+            // Next 3 functions return data for share links
+            //
+            // functions are triggered after click on button that opens share modal,
+            // which means that data should be about current (active) slide
+            getImageURLForShare: function( shareButtonData ) {
+                // 'shareButtonData' - object from shareButtons array
+                //
+                // 'pswp' is the gallery instance object,
+                // you should define it by yourself
+                //
+                return gallery.currItem.src || '';
+            },
+            getPageURLForShare: function( shareButtonData ) {
+                return window.location.href;
+            },
+            getTextForShare: function( shareButtonData ) {
+                return gallery.currItem.text || '';
+            },
+
+            // Parse output of share links
+            parseShareButtonOut: function(shareButtonData, shareButtonOut) {
+                // 'shareButtonData' - object from shareButtons array
+                // 'shareButtonOut' - raw string of share link element
+                return shareButtonOut;
+            },
+            bgOpacity: 0.85,
+            index: 0, // start at first slide
+            errorMsg: '<div class="pswp__error-msg"><a href="%url%" target="_blank">The image</a> could not be loaded.</div>'
+          };
+
+          // PhotoSwipe opened from URL
+          if (fromURL) {
+            if (options.galleryPIDs) {
+              // parse real index when custom PIDs are used
+              // http://photoswipe.com/documentation/faq.html#custom-pid-in-url
+              for (var j = 0; j < items.length; j++) {
+                if (items[j].pid == index) {
+                  options.index = j;
+                  break;
+                }
+              }
+            } else {
+              // in URL indexes start from 1
+              options.index = parseInt(index, 10) - 1;
+            }
+          } else {
+            options.index = parseInt(index, 10);
+          }
+
+          // exit if index not found
+          if (isNaN(options.index)) {
+            return;
+          }
+
+          if (disableAnimation) {
+            options.showAnimationDuration = 0;
+          }
+
+          // Pass data to PhotoSwipe and initialize it
+          gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+          gallery.init();
+        };
+
+        // loop through all gallery elements and bind events
+        var galleryElements = document.querySelectorAll(gallerySelector);
+
+        for (var i = 0, l = galleryElements.length; i < l; i++) {
+          galleryElements[i].setAttribute('data-pswp-uid', i + 1);
+          galleryElements[i].onclick = onThumbnailsClick;
+        }
+
+        // Parse URL and open gallery if it contains #&pid=3&gid=1
+        var hashData = photoswipeParseHash();
+        if (hashData.pid && hashData.gid) {
+          openPhotoSwipe(hashData.pid, galleryElements[hashData.gid - 1], true, true);
+        }
+      };
+
+      // find all objects in gallery <section> that are a <figure>
+      // and have an <img itemprop="thumbnail">
+      initPhotoSwipeFromDOM('.gallery figure [itemprop=thumbnail]');
+
+    </script>
+    <!-- End PhotoSwipe code  -->
+EOF
+  fi
+
+cat >> "${GALLERY_PATH}" <<EOF
+
+  </body>
+
+</html>
+EOF
+
+fi
+
+
+exit

@@ -17,7 +17,9 @@ It’ll also generate a HTML sample file with a lightbox and almost all document
 
 You might want to peek at the code—makethumbsf6 is very well documented and has a lot of customization settings.
 
-More documentation will follow.
+_Hint:_ For performance reasons, _makethumbsf6_ will skip already-made thumbnails and lower-res images when it is run again. If you want to _force_ it, just delete the above-mentioned subfolders.
+
+More documentation will follow. Meanwhile, have fun reading the sample HTML file. ;-)
 
 _The script (makethumbsf6) is MIT licensed, the images in the sample gallery are NOT (though many of them are CC0). Please check the image data and/or the generated HTML code which will show the copyright notices. **Thank you.**_
 

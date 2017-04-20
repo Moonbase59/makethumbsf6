@@ -13,7 +13,7 @@ It should create a set of subfolders:
 * `l` — resonsive images for large screens (1024w)
 * `xl` — responsive images for extra-large screens (1920w)
 
-It’ll also generate a **HTML sample file** with a **PhotoSwipe lightbox** and almost all **documentation included**.
+It’ll also generate a **HTML sample file** with a **[PhotoSwipe](http://photoswipe.com/) lightbox** and almost all **documentation included**.
 
 You might want to peek at the code—makethumbsf6 is very well documented and has a lot of customization settings.
 

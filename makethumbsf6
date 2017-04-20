@@ -769,9 +769,9 @@ handlefile() {
   F_PATH="${DIR_NAME}${i}" # original image
 
   # get original image dimensions and size
-  AREA=$(identify -format "%wx%h" "${F_PATH}" 2> /dev/null)
+  AREA=$(identify -format "%wx%h" "${i}" 2> /dev/null)
   WIDTH=${AREA%x*}
-  FSIZE=$(du -sh "${F_PATH}" | cut -f 1 2> /dev/null)
+  FSIZE=$(du -sh "${i}" | cut -f 1 2> /dev/null)
 
   # Go convert into each desired image format (separate folders).
   # For instance, an "s" image will be called s/origfilename.s.ext.
@@ -808,7 +808,7 @@ handlefile() {
   echo "Size: $AREA, $FSIZE"
   echo "$HEADLINE"
   echo "$DATE – $CREDITS_TEXT"
-
+  
 
   if [ "$USE_SQUARE_THUMBS" = true ]; then
   # make a SQUARE (and cropped) thumbnail as figure entry, pointing to the hi-res original
@@ -1519,7 +1519,11 @@ cat >> "${GALLERY_PATH}" <<EOF
                     return false;
                 }
                 captionEl.children[0].innerHTML = item.title;
-                captionEl.children[0].style.width = (item.w * item.fitRatio) + 'px';
+                if (item.w < item.w * item.fitRatio) {
+                  captionEl.children[0].style.width = item.w + 'px';
+                } else {
+                  captionEl.children[0].style.width = (item.w * item.fitRatio) + 'px';
+                }
                 return true;
             },
             bgOpacity: 0.85,

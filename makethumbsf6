@@ -9,6 +9,7 @@
 #      much faster), added code for non-Foundation sample HTML page,
 #      added PhotoSwipe lightbox (selectable option)
 #   2017-04-19 Better JS code for the gallery (build item list from DOM)
+#   2017-04-20 Added Twitter & GitHub links, imagecredits CSS.
 #########################################################################
 # Should be run inside the folder where
 #   - the images are
@@ -280,6 +281,10 @@ fi
 #NOW=$(date +'%d.%m.%Y %H:%M') # German date
 NOW=$(date +'%F %H:%M')
 
+# GitHub download URL
+SCRIPT_DOWNLOAD_URL="https://github.com/Moonbase59/makethumbsf6"
+SCRIPT_DOWNLOAD_TITLE="Download for free on GitHub"
+
 # FIXME: diag only, remove after testing
 #echo "$DIR_NAME"
 #echo "$BASE_DIR"
@@ -471,7 +476,8 @@ cat >> "${GALLERY_PATH}" <<EOF
   <body>
 
     <h1 id="start">Gallery »${GALLERY_NAME}«</h1>
-    <p>Created by »makethumbsf6« — ${NOW}${USE_LIGHTBOX_TEXT_SHORT} —
+    <p>Created by »<a href="${SCRIPT_DOWNLOAD_URL}" title="${SCRIPT_DOWNLOAD_TITLE}" target="_blank">makethumbsf6</a>«
+      — ${NOW}${USE_LIGHTBOX_TEXT_SHORT} —
       <a href="#donate">Like it? Read about donating.</a></p>
     <p>This is just a very simple test page where all images stretch out to
       maximum width.${USE_LIGHTBOX_TEXT_LONG}</p>
@@ -930,7 +936,8 @@ cat >> "${GALLERY_PATH}" <<EOF
       <em>exiftool</em>, <em>ImageMagick</em> and <em>Python</em> installed.</p>
     <p>Then follow these <strong>five simple steps</strong>:</p>
     <ol>
-      <li>Get hold of my script, save it to a place where the system can find it
+      <li><a href="${SCRIPT_DOWNLOAD_URL}" title="${SCRIPT_DOWNLOAD_TITLE}" target="_blank">Get
+        hold of my script</a>, save it to a place where the system can find it
         (I recommend <kbd>~/bin</kbd> on Linux systems), and give it execute rights
         (<kbd>chmod +x makethumbsf6</kbd>). This step is only needed once.</li>
       <li>Copy all images you want for any one gallery page into a folder. (If

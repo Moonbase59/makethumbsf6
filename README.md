@@ -18,3 +18,5 @@ It’ll also generate a HTML sample file with a lightbox and almost all document
 You might want to peek at the code—makethumbsf6 is very well documented and has a lot of customization settings.
 
 More documentation will follow.
+
+_The script (makethumbsf6) is MIT licensed, the images in the sample gallery are NOT (though many of them are CC0). Please check the image data and/or the generated HTML code which will show the copyright notices. **Thank you.**_

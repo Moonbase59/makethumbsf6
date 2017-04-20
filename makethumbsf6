@@ -10,6 +10,7 @@
 #      added PhotoSwipe lightbox (selectable option)
 #   2017-04-19 Better JS code for the gallery (build item list from DOM)
 #   2017-04-20 Added Twitter & GitHub links, imagecredits CSS.
+#     Changed PhotoSwipe code so captions are now same width as image.
 #########################################################################
 # Should be run inside the folder where
 #   - the images are
@@ -434,6 +435,7 @@ cat > "${GALLERY_PATH}" <<EOF
   <head>
     <meta charset="utf-8">
     <title>${GALLERY_NAME}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 EOF
 
   if [[ "$USE_LIGHTBOX" = true ]]; then
@@ -470,6 +472,10 @@ cat >> "${GALLERY_PATH}" <<EOF
       .imagecredits:before {
         content: '\A';
         white-space: pre;
+      }
+      /* max. width of self-adjusting lightbox caption */
+      .pswp__caption__center {
+        max-width: 100%;
       }
     </style>
   </head>
@@ -1506,6 +1512,16 @@ cat >> "${GALLERY_PATH}" <<EOF
                 // 'shareButtonOut' - raw string of share link element
                 return shareButtonOut;
             },
+            // make image caption self-adjust to image width
+            addCaptionHTMLFn: function(item, captionEl /*, isFake */) {
+                if(!item.title) {
+                    captionEl.children[0].innerHTML = '';
+                    return false;
+                }
+                captionEl.children[0].innerHTML = item.title;
+                captionEl.children[0].style.width = (item.w * item.fitRatio) + 'px';
+                return true;
+            },
             bgOpacity: 0.85,
             index: 0, // start at first slide
             errorMsg: '<div class="pswp__error-msg"><a href="%url%" target="_blank">The image</a> could not be loaded.</div>'
@@ -1541,6 +1557,11 @@ cat >> "${GALLERY_PATH}" <<EOF
 
           // Pass data to PhotoSwipe and initialize it
           gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+          // FIXME: Find out how to do this better
+          // on resizing the viewport, update UI to handle changing caption width
+          gallery.listen('resize', function() {
+            gallery.ui.update();
+          });
           gallery.init();
         };
 

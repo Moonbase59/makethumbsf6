@@ -20,3 +20,11 @@ You might want to peek at the code—makethumbsf6 is very well documented and ha
 More documentation will follow.
 
 _The script (makethumbsf6) is MIT licensed, the images in the sample gallery are NOT (though many of them are CC0). Please check the image data and/or the generated HTML code which will show the copyright notices. **Thank you.**_
+
+## Requirements
+
+* A _Linux-type OS_ that has a _bash_ shell with array support and can do 'sort -z'.
+* [ImageMagick](https://www.imagemagick.org/)
+* [Exiftool](http://www.sno.phy.queensu.ca/~phil/exiftool/)
+
+* For changes and setting options: A text editor that handles UTF-8 (no BOM please).

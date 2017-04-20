@@ -458,6 +458,14 @@ cat >> "${GALLERY_PATH}" <<EOF
         background-color: lightgray;
         padding: 1rem 1rem 1rem 1rem;
       }
+      /* Make image credits a little smaller, on a new line */
+      .imagecredits {
+        font-size: 80%;
+      }
+      .imagecredits:before {
+        content: '\A';
+        white-space: pre;
+      }
     </style>
   </head>
   <body>
@@ -1203,6 +1211,13 @@ cat >> "${GALLERY_PATH}" <<EOF
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348311" target="_blank" title="Donate (Paypal, any amount in Canadian Dollars)">CAD</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348355" target="_blank" title="Donate (Paypal, any amount in Pound Sterling)">GBP</a> accepted).</li>
     </ul>
+
+    <h3>Let us know what you think. How <em>you</em> use it.</h3>
+    <ul>
+      <li><a href="https://twitter.com/intent/tweet?text=$(urlencode "Easily make thumbs, responsive images, HTML markup")&amp;url=$(urlencode "https://github.com/Moonbase59/makethumbsf6")&amp;via=Moonbase59&amp;hashtags=makethumbsf6,thumbnails,responsive,foundation" target="_blank">Tweet</a>
+        about it, or just drop me a line <a href="https://twitter.com/intent/tweet?text=$(urlencode "@Moonbase59")&amp;hashtags=makethumbsf6" target="_blank">@Moonbase59</a>.</li>
+    </ul>
+
     <p><strong>Thank you!</strong> I really appreciate it, and it’ll certainly help keeping more nice things coming!</p>
 
     <p><strong>Script »makethumbsf6« Copyright © 2017 Matthias C. Hormann.

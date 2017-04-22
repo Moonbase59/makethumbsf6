@@ -65,6 +65,55 @@ Here is a prioritized list of tags from which we read the image data:
 
 
 
+## Generated markup
+
+### Example: Thumbnail with link to a lightbox script.
+
+This example has a filename using foreign characters (URL-encoded where necessary), quite a long description, both photographer’s name and credits in it’s data, IMAGE_LINKTO="xl", USE_MAPS=true, MAPLINK_TEXT="Show on map (Google Maps)". It also features a copyright notice and GPS data (latitude, longitude, altitude and viewing direction).
+
+All data read from the actual image is safely encoded using HTML entities (instead of using simple UTF-8), so there’s no possibility that characters like `"`, `'`, `<`, `>` and others could break your code or open any security holes.
+
+```html
+<!-- 040-winter-in-bad-grönenbach.jpg (1920x2560px) - cropped, square thumbnail with link to original image -->
+<!-- Image copyright: Copyright &copy; 2016 Matthias C. Hormann, all rights reserved. Alle Rechte vorbehalten. -->
+<!-- Image location: 47.8521118055556,10.1619062222222 Height: 732m Viewing direction: 40° -->
+<figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="Eisesk&auml;lte in Bad Gr&ouml;nenbach">
+  <a href="xl/040-winter-in-bad-gr%C3%B6nenbach.xl.jpg" itemprop="contentUrl" data-size="1920x2560">
+    <img src="ts/040-winter-in-bad-gr%C3%B6nenbach.ts.jpg" itemprop="thumbnail" alt="Eisesk&auml;lte in Bad Gr&ouml;nenbach">
+  </a>
+  <figcaption itemprop="caption description" title="Eisesk&auml;lte in Bad Gr&ouml;nenbach"><h4>Eisesk&auml;lte in Bad Gr&ouml;nenbach</h4><p><span itemprop="dateCreated" content="2016-12-22T11:17:09">2016-12-22</span> — Trotz Sonnenschein herrschte im Dezember in Bad Gr&ouml;nenbach und Umgebung eine klirrende K&auml;lte &ndash; bis zu -21 &deg;C wurden gemessen. Auf der Kreisstra&szlig;e zwischen Bad Gr&ouml;nenbach und Legau entdeckte unser Fotograf diesen vom Eis verzauberten Baum am Stra&szlig;enrand. [This is an example for UTF-8-encoded foreign text and auto-generated map links.] <span class="imagecredits">(Photo: Matthias C. Hormann / M. Hormann Webdesign)</span></p><a href="https://maps.google.com/maps?t=m&amp;q=47.8521118055556,10.1619062222222" rel="nofollow" target="_blank">Show on map (Google Maps)</a></figcaption>
+</figure>
+```
+
+When auto-generating a _Foundation 6 partial_, the script will have these active.
+
+### Example: Same image, responsive, fullsize.
+
+This shows the generated HTML for the same image, fullsize, with responsive markup (using a `srcset`, so the user’s browser decides which image to actually load; this also neatly solves all problems with Retina displays and the like):
+
+```html
+<!-- 040-winter-in-bad-grönenbach.jpg (1920x2560px) - "normal" image on a page, with a srcset (responsive loading) -->
+<!-- Image copyright: Copyright &copy; 2016 Matthias C. Hormann, all rights reserved. Alle Rechte vorbehalten. -->
+<!-- Image location: 47.8521118055556,10.1619062222222 Height: 732m Viewing direction: 40° -->
+<figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="Eisesk&auml;lte in Bad Gr&ouml;nenbach">
+  <img srcset="
+      s/040-winter-in-bad-gr%C3%B6nenbach.s.jpg 320w,
+      m/040-winter-in-bad-gr%C3%B6nenbach.m.jpg 640w,
+      l/040-winter-in-bad-gr%C3%B6nenbach.l.jpg 1024w,
+      xl/040-winter-in-bad-gr%C3%B6nenbach.xl.jpg 1920w
+      "
+    src="s/040-winter-in-bad-gr%C3%B6nenbach.s.jpg"
+    sizes="
+      100vw"
+    alt="Eisesk&auml;lte in Bad Gr&ouml;nenbach">
+  <figcaption itemprop="caption description" title="Eisesk&auml;lte in Bad Gr&ouml;nenbach"><h4>Eisesk&auml;lte in Bad Gr&ouml;nenbach</h4><p><span itemprop="dateCreated" content="2016-12-22T11:17:09">2016-12-22</span> — Trotz Sonnenschein herrschte im Dezember in Bad Gr&ouml;nenbach und Umgebung eine klirrende K&auml;lte &ndash; bis zu -21 &deg;C wurden gemessen. Auf der Kreisstra&szlig;e zwischen Bad Gr&ouml;nenbach und Legau entdeckte unser Fotograf diesen vom Eis verzauberten Baum am Stra&szlig;enrand. [This is an example for UTF-8-encoded foreign text and auto-generated map links.] <span class="imagecredits">(Photo: Matthias C. Hormann / M. Hormann Webdesign)</span></p><a href="https://maps.google.com/maps?t=m&amp;q=47.8521118055556,10.1619062222222" rel="nofollow" target="_blank">Show on map (Google Maps)</a></figcaption>
+</figure>
+```
+
+In the _standalone version_, the generated HTML page will also show this image so you can verify that everything loads as expected.
+
+When generating a _Foundation 6 partial_, the fullsize image markup will _also be included, but commented out_. This allows to copy-paste perfect responsive image markup for other places on your website. Usually, when generating the production version, the HTML will run through some minification process anyway and the comment be cleaned out automatically, so no overhead is generated for the production site. (Check your _gulpfile.babel.js_ and _htmlmin_.)
+
 ## Customization: Have _makethumbsf6_ do what _you_ need!
 
 My script is highly customizable and each option very well documented. Just make a backup, then open the `makethumbsf6` script with a normal (UTF-8-capable) text editor and have a peek inside.

@@ -31,9 +31,11 @@ _You typically use this when working on projects using the Foundation framework,
 
 I strongly believe that image information should be stored together with the image (much like we do it with FLAC or MP3 files already). The image files can then be copied, moved, put on the web without the need of updating databases, changing HTML markup manually, and even the image credits will still be in place if someone downloads it.
 
-Like image and new agencies already do for a long time, I encourage you to store data like a headline, a caption text, the photographer’s name and a copyright notice _inside_ your images. You can use tools like _exiftool_ (or many others) for that, or Adobe Photoshop, Adobe Lightroom, even Windows’ image properties or Mac OSX’ finder.
+Like image and news agencies already do for a long time, I encourage you to store data like a **headline**, a **caption text**, the **photographer’s name** and a **copyright notice** _inside_ your images. You can use tools like _exiftool_ (or many others) for that, or Adobe Photoshop, Adobe Lightroom, even Windows’ image properties or Mac OSX’ Finder.
 
-_Makethumbsf6_ will then _automatically_ read this data, and present you with a beautiful and customizable view. It’ll even generate _map links_ for you, if the GPS location is stored in the images (like many new cameras and smartphones do).
+Some modern professional cameras (Nikon come to mind) already allow setting your name and copyright line _in the camera settings_, so this information will automatically be stored with each shot you take.
+
+_Makethumbsf6_ will _automatically_ read this data, and present you with a beautiful and customizable view. It’ll even generate _map links_ for you, if the **GPS location** is stored in the images (like many new cameras and smartphones do).
 
 Additionally, _makethumbsf6_ will automatically put the photographer’s name and (if specified) additional image credits (like maybe the image agency’s name) next to your caption text. This makes it super-easy for you to follow licensing or local laws, if so required.
 

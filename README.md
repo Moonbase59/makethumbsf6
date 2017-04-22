@@ -1,5 +1,7 @@
 # makethumbsf6
 
+
+
 ## Make thumbnails, responsive images and HTML/Zurb Foundation 6 markup all in one go!
 
 A _bash_ script, put it into `~/bin`, `chmod +x makethumbsf6` and for a first (standalone) trial run start it from _inside_ the `sample-gallery` folder.
@@ -37,6 +39,30 @@ Additionally, _makethumbsf6_ will automatically put the photographer’s name an
 
 **Run _makethumbsf6_ inside the `sample-gallery` folder, then view the generated HTML file with your browser.** All sample images have tags (some even GPS data) so you can get a first idea of what can be done. Feel free to change some tags within the sample images (maybe using _exiftool_ or another application you prefer), then run _makethumbsf6_ again to see what’s changed.
 
+#### Image tags currently known and used by _makethumbsf6_:
+
+For all tags, we follow the strict fallback rule: _EXIF → IPTC → XMP_. This means, if there is an EXIF tag, we use it. If not, we fall back to IPTC data, and as a last measure to XMP.
+
+Here is a prioritized list of tags from which we read the image data:
+
+* CREATOR: `exif:artist`, `by-line`, `creator`
+
+* CREDIT: `credit`, `publisher`
+
+* DESCRIPTION: `exif:imagedescription`, `caption-abstract`, `description`, `XPcomment`
+
+* HEADLINE: `headline`, `objectname`, `title`
+
+* KEYWORDS: `keywords`, `subject`
+
+* COPYRIGHT: `exif:copyright`, `copyrightnotice`, `rights`
+
+* DATE: `dateTimeOriginal`
+
+* LOCATION: `gpslatitude`, `gpslongitude`, `gpsaltitude`, `gpsimgdirection`
+
+
+
 ## Customization: Have _makethumbsf6_ do what _you_ need!
 
 My script is highly customizable and each option very well documented. Just make a backup, then open the `makethumbsf6` script with a normal (UTF-8-capable) text editor and have a peek inside.
@@ -45,7 +71,7 @@ You’ll find a lot of customization options that you can change to fit _your_ n
 
 * **USE_SQUARE_THUMBS**: Use square thumbnails (auto-cropped), or »normal« ones (having the same aspect ratio as the original image)?
 
-* **USE_LIGHTBOX**: For the stanbalone version, include the _PhotoSwipe_ lightbox?
+* **USE_LIGHTBOX**: For the standalone version, include the _PhotoSwipe_ lightbox?
 
 * **FIGURE_TITLE**: Force the same title for all thumbnails (i.e., »Click to magnify« instead of the image’s headline)?
 
@@ -76,6 +102,8 @@ More documentation will follow. Meanwhile, have fun reading the sample HTML file
 _The script (makethumbsf6) is MIT licensed, the images in the sample gallery are NOT (though many of them are CC0). Please check the image data and/or the generated HTML code which will show the copyright notices. **Thank you.**_
 
 Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59&amp;hashtags=makethumbsf6) and let me know what you think. Or [let others know, too](https://twitter.com/intent/tweet?text=Easily%20make%20thumbs%2C%20responsive%20images%2C%20HTML%20markup&url=https%3A%2F%2Fgithub.com%2FMoonbase59%2Fmakethumbsf6&via=Moonbase59&hashtags=makethumbsf6,thumbnails,responsive,foundation)!
+
+
 
 ## Requirements
 

@@ -85,7 +85,26 @@ All data read from the actual image is safely encoded using HTML entities (inste
 </figure>
 ```
 
-When auto-generating a _Foundation 6 partial_, the script will have these active.
+When auto-generating a _Foundation 6 partial_, the script will have these active. On thumbnails, the _caption is often suppressed_ via CSS:
+
+```css
+.gallery figcaption {
+  display: none;
+}
+```
+
+The _credits_ in the lightbox can also be displayed on a new line, using a slightly smaller font:
+
+```css
+/* Make image credits a little smaller, on a new line */
+.imagecredits {
+  font-size: 80%;
+}
+.imagecredits:before {
+  content: '\A';
+  white-space: pre;
+}
+```
 
 ### Example: Same image, responsive, fullsize.
 

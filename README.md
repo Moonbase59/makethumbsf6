@@ -21,7 +21,7 @@ It should create a set of subfolders:
 
 * _Makethumbsf6_ now also handles **TIFF** (.tif, .tiff) files. Per default, these will be automatically **converted to JPEG** images (smaller, browsers can display them).
 
-* You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`.
+* You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`. (This affects only the _generated_ images, _not_ your originals!)
 
 ### Standalone
 

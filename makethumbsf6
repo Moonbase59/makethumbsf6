@@ -11,6 +11,8 @@
 #   2017-04-19 Better JS code for the gallery (build item list from DOM)
 #   2017-04-20 Added Twitter & GitHub links, imagecredits CSS.
 #     Changed PhotoSwipe code so captions are now same width as image.
+#   2017-04-23 Changed lightbox sharing icons from Foundation icons
+#     to Font Awesome (used in new building blocks, more widespread)
 #########################################################################
 # Should be run inside the folder where
 #   - the images are
@@ -443,6 +445,8 @@ cat >> "${GALLERY_PATH}" <<EOF
     <!-- PhotoSwipe (delivered from CDN for standalone) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css">
+    <!-- Font Awesome font for share icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 EOF
   fi
 
@@ -808,7 +812,7 @@ handlefile() {
   echo "Size: $AREA, $FSIZE"
   echo "$HEADLINE"
   echo "$DATE – $CREDITS_TEXT"
-  
+
 
   if [ "$USE_SQUARE_THUMBS" = true ]; then
   # make a SQUARE (and cropped) thumbnail as figure entry, pointing to the hi-res original
@@ -1482,10 +1486,10 @@ cat >> "${GALLERY_PATH}" <<EOF
             showHideOpacity:true, // better if thumbs don’t have image aspect ratio
 
             shareButtons: [
-                {id:'facebook', label:'<i class="fi-social-facebook"></i>&emsp;Share on Facebook', url:'https://www.facebook.com/sharer/sharer.php?u={{url}}'},
-                {id:'twitter', label:'<i class="fi-social-twitter"></i>&emsp;Tweet on Twitter', url:'https://twitter.com/intent/tweet?text={{text}}&url={{url}}'},
-                {id:'pinterest', label:'<i class="fi-social-pinterest"></i>&emsp;Pin on Pinterest', url:'http://www.pinterest.com/pin/create/button/?url={{url}}&media={{image_url}}&description={{text}}'},
-                {id:'download', label:'<i class="fi-download"></i>&emsp;Download', url:'{{raw_image_url}}', download:true}
+                {id:'facebook', label:'<i class="fa fa-facebook-official"></i>&emsp;Share on Facebook', url:'https://www.facebook.com/sharer/sharer.php?u={{url}}'},
+                {id:'twitter', label:'<i class="fa fa-twitter"></i>&emsp;Tweet on Twitter', url:'https://twitter.com/intent/tweet?text={{text}}&url={{url}}'},
+                {id:'pinterest', label:'<i class="fa fa-pinterest"></i>&emsp;Pin on Pinterest', url:'http://www.pinterest.com/pin/create/button/?url={{url}}&media={{image_url}}&description={{text}}'},
+                {id:'download', label:'<i class="fa fa-download"></i>&emsp;Download', url:'{{raw_image_url}}', download:true}
             ],
             // Next 3 functions return data for share links
             //

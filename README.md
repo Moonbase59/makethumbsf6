@@ -15,6 +15,14 @@ It should create a set of subfolders:
 * `l` — resonsive images for large screens (1024w)
 * `xl` — responsive images for extra-large screens (1920w)
 
+### What’s new in version 0.9.0?
+
+* **Animated GIFs** are now handled (and resized) correctly. _Hint:_ If the generated lower resolution images look like 4 images on top of each other, you might want to upgrade your _ImageMagick_ to a newer version.
+
+* _Makethumbsf6_ now also handles **TIFF** (.tif, .tiff) files. Per default, these will be automatically **converted to JPEG** images (smaller, browsers can display them).
+
+* You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`.
+
 ### Standalone
 
 If run within a »normal« image folder, _makethumbsf6_ will also generate a **HTML sample file** with a **[PhotoSwipe](http://photoswipe.com/) lightbox** and almost all **documentation included**.

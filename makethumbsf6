@@ -180,6 +180,9 @@
 # will delete ALL XMP or IPTC tags in all JPG files!
 #
 
+# Version
+VERSION='0.9.0'
+
 # define me
 me=$(basename "$0")
 
@@ -381,18 +384,25 @@ F_NAME=("t" "ts" "s" "m" "l" "xl")
 F_BREAKPOINT=("0px" "0px" "320px" "640px" "1024px" "1920px")
 # options for ImageMagick convert
 F_CONV=(
-  # Thumbnails: max. 120x120, non-cropped
-  '-auto-orient -thumbnail 120x120 -quality 75'
+  # Thumbnails: max. 120x120, non-cropped (-coalesce added for animated GIFs)
+  '-coalesce -auto-orient -thumbnail 120x120 -quality 75'
   # Thumbnails: 120x120, cropped
-  '-auto-orient -thumbnail 120x120^ -gravity center -extent 120x120 -quality 75'
+  '-coalesce -auto-orient -thumbnail 120x120^ -gravity center -extent 120x120 -quality 75'
   # Small screens: max. 320 width, strip EXIF/IPTC/XMP data
-  '-auto-orient -resize 320> -strip -interlace Plane -quality 50'
+  '-coalesce -auto-orient -resize 320> -strip -interlace Plane -quality 50'
   # Medium screens: max. 640 width (no data stripping)
-  '-auto-orient -resize 640> -interlace Plane -quality 50'
+  '-coalesce -auto-orient -resize 640> -interlace Plane -quality 50'
   # Large screens: max. 1024 width (no data stripping)
-  '-auto-orient -resize 1024> -interlace Plane -quality 70'
+  '-coalesce -auto-orient -resize 1024> -interlace Plane -quality 70'
   # X-Large screens: max. 1920 width (no data stripping)
-  '-auto-orient -resize 1920> -interlace Plane -quality 75'
+  '-coalesce -auto-orient -resize 1920> -interlace Plane -quality 75'
+)
+# List of file types to convert into web-displayable formats:
+F_CHANGETYPE=(
+  'tif,jpg'   # convert tif to jpg (smaller & browsers can display it)
+  'tiff,jpg'  # ditto
+  'mpo,jpg'   # .mpo (a 3D image format) are actually 2 JPEGs in one file
+  'jpeg,jpg'  # jpeg to jpg, for purely aesthetical reasons
 )
 # some variables where we later store temporary image results
 F_FNAME=()
@@ -407,7 +417,7 @@ F_FSIZE=()
 # with the variables above (which should be good for most people
 #########################################################################
 
-echo Running $0 …
+echo $me v$VERSION …
 
 # create folders if they don’t yet exist
 for f in ${F_NAME[@]}; do
@@ -772,8 +782,8 @@ handlefile() {
   # construct (default) image path for image to be linked to
   F_PATH="${DIR_NAME}${i}" # original image
 
-  # get original image dimensions and size
-  AREA=$(identify -format "%wx%h" "${i}" 2> /dev/null)
+  # get original image dimensions and size (read frame #0 for GIFs)
+  AREA=$(identify -format "%wx%h" "${i}[0]" 2> /dev/null)
   WIDTH=${AREA%x*}
   FSIZE=$(du -sh "${i}" | cut -f 1 2> /dev/null)
   O_PATH="${F_PATH}"
@@ -795,11 +805,24 @@ handlefile() {
 
     echo -n "  - ${F_NAME[f]}: "
 
-    F_FNAME[f]="${i%.*}.${F_NAME[f]}.${i##*.}"
+    F_FEXT[f]="${i##*.}" # extension only
+    F_FEXT[f]="${F_FEXT[f],,}"  # make lowercase
+    # see if we need to convert to a different type (i.e., tiff → jpg)
+    # if so, change extension
+    t=0
+    while [ "${F_CHANGETYPE[t]}" != "" ]; do
+      tfrom=${F_CHANGETYPE[t]%%,*}
+      tto=${F_CHANGETYPE[t]##*,}
+      if [ "$tfrom" = "${F_FEXT[f]}" ]; then
+        F_FEXT[f]="$tto"
+      fi
+      t=$(( $t + 1 ))
+    done
+    F_FNAME[f]="${i%.*}.${F_NAME[f]}.${F_FEXT[f]}" # make basename.type.ext
     if [ ! -s "${F_NAME[f]}/${F_FNAME[f]}" ]; then
-      convert ${F_CONV[f]} "$i" "${F_NAME[f]}/${F_FNAME[f]}"
+      convert "$i" ${F_CONV[f]} "${F_NAME[f]}/${F_FNAME[f]}" 2> /dev/null
     fi
-    F_AREA[f]=$(identify -format "%wx%h" "${F_NAME[f]}/${F_FNAME[f]}" 2> /dev/null)
+    F_AREA[f]=$(identify -format "%wx%h" "${F_NAME[f]}/${F_FNAME[f]}[0]" 2> /dev/null)
     F_WIDTH[f]=${F_AREA[f]%x*}
     F_FSIZE[f]=$(du -sh "${F_NAME[f]}/${F_FNAME[f]}" | cut -f 1)
 
@@ -931,7 +954,8 @@ EOF
 while IFS= read -r -d '' i; do
   handlefile "$i"
 done < <(find . -maxdepth 1 \( -iname '*.jp*g' -o -iname '*.png' \
-  -o -iname '*.gif' -o -iname '*.mpo' \) -type f -print0 | sort -z)
+  -o -iname '*.gif' -o -iname '*.mpo' -o -iname '*.tif' -o -iname '*.tiff' \) \
+  -type f -print0 | sort -z)
 
 
 cat >> "${GALLERY_PATH}" <<EOF

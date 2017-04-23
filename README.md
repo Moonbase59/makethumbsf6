@@ -163,6 +163,8 @@ You’ll find a lot of customization options that you can change to fit _your_ n
 
 * **F_NAME, F_BREAKPOINT, F_CONV**: Number and names of different image versions to generate, their (or your framework’s) responsive breakpoints, and even the commands for each resolution to be given to ImageMagick’s `convert`.
 
+* **F_CHANGETYPE**: Convert one filetype to another, i.e. TIFF → JPEG on the fly.
+
 * … and many, many more!
 
 The generated HTML markup has **_schema.org_ microdata**, is **SEO-optimized**, and **_valid_**. You can easily change lots of display options using pure **CSS**.

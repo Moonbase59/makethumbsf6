@@ -776,6 +776,14 @@ handlefile() {
   AREA=$(identify -format "%wx%h" "${i}" 2> /dev/null)
   WIDTH=${AREA%x*}
   FSIZE=$(du -sh "${i}" | cut -f 1 2> /dev/null)
+  O_PATH="${F_PATH}"
+  O_AREA="${AREA}"
+  O_WIDTH="${WIDTH}"
+  O_FSIZE="${FSIZE}"
+
+  echo "Size: $O_AREA, $O_FSIZE"
+  echo "$HEADLINE"
+  echo "$DATE – $CREDITS_TEXT"
 
   # Go convert into each desired image format (separate folders).
   # For instance, an "s" image will be called s/origfilename.s.ext.
@@ -809,17 +817,14 @@ handlefile() {
     f=$(( $f + 1 ))
   done
 
-  echo "Size: $AREA, $FSIZE"
-  echo "$HEADLINE"
-  echo "$DATE – $CREDITS_TEXT"
-
 
   if [ "$USE_SQUARE_THUMBS" = true ]; then
-  # make a SQUARE (and cropped) thumbnail as figure entry, pointing to the hi-res original
+  # make a SQUARE (and cropped) thumbnail as figure entry
   # which PhotoSwipe can read out
 cat >> "${GALLERY_PATH}" <<EOF
-    <!-- ${i} (${AREA}px) - cropped, square thumbnail with link to original image -->
+    <!-- ${O_PATH} (${O_AREA}px) - cropped, square thumbnail with link to hi-res image -->
     <!-- Image copyright: ${COPYRIGHT} -->
+    <!-- Image keywords: ${KEYWORDS} -->
     <!-- Image location: ${LOCATION} Height: ${ALT}m Viewing direction: ${DIR}° -->
     <figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="$FTITLE">
       <a href="${ROOT}$(urlenc "${F_PATH}")" itemprop="contentUrl" data-size="${AREA}">
@@ -830,11 +835,12 @@ cat >> "${GALLERY_PATH}" <<EOF
 
 EOF
   else
-  # make a thumbnail as figure entry, pointing to the hi-res original
+  # make a "regular" thumbnail (original aspect) as figure entry
   # which PhotoSwipe can read out
 cat >> "${GALLERY_PATH}" <<EOF
-    <!-- ${i} (${AREA}px) - thumbnail with link to original image -->
+    <!-- ${O_PATH} (${O_AREA}px) - thumbnail with link to hi-res image -->
     <!-- Image copyright: ${COPYRIGHT} -->
+    <!-- Image keywords: ${KEYWORDS} -->
     <!-- Image location: ${LOCATION} Height: ${ALT}m Viewing direction: ${DIR}° -->
     <figure itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject" title="$FTITLE">
       <a href="${ROOT}$(urlenc "${F_PATH}")" itemprop="contentUrl" data-size="${AREA}">
@@ -851,8 +857,9 @@ EOF
   # This is the best method (also for Retina displays) to
   # let the browser decide which image to load.
 cat >> "${GALLERY_PATH}" <<EOF
-    <!-- ${i} (${AREA}px) - "normal" image on a page, with a srcset (responsive loading) -->
+    <!-- ${O_PATH} (${O_AREA}px) - "normal" image on a page, with a srcset (responsive loading) -->
     <!-- Image copyright: ${COPYRIGHT} -->
+    <!-- Image keywords: ${KEYWORDS} -->
     <!-- Image location: ${LOCATION} Height: ${ALT}m Viewing direction: ${DIR}° -->
 EOF
 

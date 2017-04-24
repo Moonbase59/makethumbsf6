@@ -189,7 +189,7 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 
 ## Requirements
 
-* A _Linux-type OS_ that has a _bash_ shell with array support and can do 'sort -z'.
+* A _Linux-type OS_ that has a _bash_ shell with array support and can do 'sort -z'. This means you should be able to use this script on **nearly any Linux machine** as well as on **Apple products** running **Mac OS X** (starting with 10.3 »Panther«), **OS X** and **macOS Sierra**.
 * [ImageMagick](https://www.imagemagick.org/)
 * [Exiftool](http://www.sno.phy.queensu.ca/~phil/exiftool/)
 

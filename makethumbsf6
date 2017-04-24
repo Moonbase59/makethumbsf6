@@ -13,6 +13,10 @@
 #     Changed PhotoSwipe code so captions are now same width as image.
 #   2017-04-23 Changed lightbox sharing icons from Foundation icons
 #     to Font Awesome (used in new building blocks, more widespread)
+#   2017-04-24 No more superfluous srcset (duplicate) image widths,
+#     these wouldn’t validate. Image sizes now read by exiftool instead
+#     of identify, since later breaks on filenames containing apostrophes
+#     and the like. Bumped version to 0.9.1.
 #########################################################################
 # Should be run inside the folder where
 #   - the images are
@@ -181,7 +185,7 @@
 #
 
 # Version
-VERSION='0.9.0'
+VERSION='0.9.1'
 
 # define me
 me=$(basename "$0")
@@ -443,7 +447,7 @@ if [ "$F6" != true ]; then
 
 cat > "${GALLERY_PATH}" <<EOF
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <title>${GALLERY_NAME}</title>
@@ -474,6 +478,7 @@ cat >> "${GALLERY_PATH}" <<EOF
         max-width: 100%;
         width: auto;  # to make it responsive
         height: auto;
+        border: 0;
       }
       figure {
         background-color: lightgray;
@@ -783,7 +788,10 @@ handlefile() {
   F_PATH="${DIR_NAME}${i}" # original image
 
   # get original image dimensions and size (read frame #0 for GIFs)
-  AREA=$(identify -format "%wx%h" "${i}[0]" 2> /dev/null)
+  # Must use exiftool for this since ImageMagick’s identify breaks
+  # on filenames containing things like ", ', $, [, ]
+  # AREA=$(identify -format "%wx%h" "${i}[0]" 2> /dev/null)
+  AREA=$(exiftool -p '${ImageWidth}x${ImageHeight}' "${i}" 2> /dev/null)
   WIDTH=${AREA%x*}
   FSIZE=$(du -sh "${i}" | cut -f 1 2> /dev/null)
   O_PATH="${F_PATH}"
@@ -791,7 +799,7 @@ handlefile() {
   O_WIDTH="${WIDTH}"
   O_FSIZE="${FSIZE}"
 
-  echo "Size: $O_AREA, $O_FSIZE"
+  echo "Size: $O_AREA; $O_FSIZE"
   echo "$HEADLINE"
   echo "$DATE – $CREDITS_TEXT"
 
@@ -822,7 +830,9 @@ handlefile() {
     if [ ! -s "${F_NAME[f]}/${F_FNAME[f]}" ]; then
       convert "$i" ${F_CONV[f]} "${F_NAME[f]}/${F_FNAME[f]}" 2> /dev/null
     fi
-    F_AREA[f]=$(identify -format "%wx%h" "${F_NAME[f]}/${F_FNAME[f]}[0]" 2> /dev/null)
+    # Use exiftool instead of identify since identify breaks on odd filenames
+    # F_AREA[f]=$(identify -format "%wx%h" "${F_NAME[f]}/${F_FNAME[f]}[0]" 2> /dev/null)
+    F_AREA[f]=$(exiftool -p '${ImageWidth}x${ImageHeight}' "${F_NAME[f]}/${F_FNAME[f]}" 2> /dev/null)
     F_WIDTH[f]=${F_AREA[f]%x*}
     F_FSIZE[f]=$(du -sh "${F_NAME[f]}/${F_FNAME[f]}" | cut -f 1)
 
@@ -898,15 +908,21 @@ EOF
 
   # make a "srcset" that contains all sizes we defined
   # start at index 2 (since 0 and 1 are used for thumbnails)
+  # If image is smaller than widest breakpoint, we might get duplicates:
+  # try to avoid them since that would not validate (w3.org).
   f=2
   while [ "x${F_NAME[f]}" != "x" ]; do
-    echo -n "          ${ROOT}$(urlenc "${DIR_NAME}${F_NAME[f]}/${F_FNAME[f]}") ${F_WIDTH[f]}w" >> "${GALLERY_PATH}"
-    f=$(( $f + 1 ))
-    # add a comma if there is more to come
-    if [[ "x${F_NAME[f]}" != "x"  ]]; then
-      echo -n "," >> "${GALLERY_PATH}"
+    if [ "${F_WIDTH[f]}" -gt "${F_WIDTH[f-1]}" ]; then
+      echo -n "          ${ROOT}$(urlenc "${DIR_NAME}${F_NAME[f]}/${F_FNAME[f]}") ${F_WIDTH[f]}w" >> "${GALLERY_PATH}"
+      f=$(( $f + 1 ))
+      # add a comma if there is more to come
+      if [ "x${F_NAME[f]}" != "x"  ] && [ "${F_WIDTH[f]}" -gt "${F_WIDTH[f-1]}" ]; then
+        echo -n "," >> "${GALLERY_PATH}"
+      fi
+      echo >> "${GALLERY_PATH}"
+    else
+      break
     fi
-    echo >> "${GALLERY_PATH}"
   done
 
 cat >> "${GALLERY_PATH}" <<EOF
@@ -1253,7 +1269,7 @@ cat >> "${GALLERY_PATH}" <<EOF
       <li>Buy me <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11346898" target="_blank" title="Buy me a beer! (Paypal, €&nbsp;3.90)">a beer</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347235" target="_blank" title="Buy me a cappucino! (Paypal, €&nbsp;3.50)">a cappuccino</a>,
       or <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347307" target="_blank" title="Buy me a glass of red wine! (Paypal, €&nbsp;5.90)">a glass of red wine</a>!</li>
-      <li>Send me something from my <a href="http://www.amazon.de/gp/redirect.html?ie=UTF8&amp;location=http%3A%2F%2Fwww.amazon.de%2Fgp%2Fregistry%2Fwishlist%2FK8T279QJ5LUA&amp;site-redirect=de&amp;tag=computepartnerma&amp;linkCode=ur2&amp;camp=1638&amp;creative=19454" target="_blank" title="Buy me something from my Amazon wishlist! (Amazon.de)">Amazon wishlist</a><img src="https://www.assoc-amazon.de/e/ir?t=computepartnerma&amp;l=ur2&amp;o=3" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;">!</li>
+      <li>Send me something from my <a href="http://www.amazon.de/gp/redirect.html?ie=UTF8&amp;location=http%3A%2F%2Fwww.amazon.de%2Fgp%2Fregistry%2Fwishlist%2FK8T279QJ5LUA&amp;site-redirect=de&amp;tag=computepartnerma&amp;linkCode=ur2&amp;camp=1638&amp;creative=19454" target="_blank" title="Buy me something from my Amazon wishlist! (Amazon.de)">Amazon wishlist</a><img src="https://www.assoc-amazon.de/e/ir?t=computepartnerma&amp;l=ur2&amp;o=3" width="1" height="1" alt="" style="border:none !important; margin:0px !important;">!</li>
       <li>Or just donate as much as you feel like (Paypal; <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347390" target="_blank" title="Donate (Paypal, any amount in Euros)">EUR</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348209" target="_blank" title="Donate (Paypal, any amount in US$)">USD</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348311" target="_blank" title="Donate (Paypal, any amount in Canadian Dollars)">CAD</a>,
@@ -1330,7 +1346,7 @@ cat >> "${GALLERY_PATH}" <<EOF
             <button class="pswp__button pswp__button--zoom" title="Zoom +/-"></button>
 
             <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
-            <!-- element will get class 'pswp__preloader--active' when preloader is running -->
+            <!-- element will get class pswp__preloader__active when preloader is running -->
             <div class="pswp__preloader">
               <div class="pswp__preloader__icn">
                 <div class="pswp__preloader__cut">

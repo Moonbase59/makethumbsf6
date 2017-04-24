@@ -15,15 +15,15 @@ It should create a set of subfolders:
 * `l` — resonsive images for large screens (1024w)
 * `xl` — responsive images for extra-large screens (1920w)
 
-### What’s new in version 0.9.0?
 
-* **Animated GIFs** are now handled (and resized) correctly. _Hint:_ If the generated lower resolution images look like 4 images on top of each other, you might want to upgrade your _ImageMagick_ to a newer version.
+### What’s new in version 0.9.1?
 
-* _Makethumbsf6_ now also handles **TIFF** (.tif, .tiff) files. Per default, these will be automatically **converted to JPEG** images (smaller, browsers can display them).
+* **Safety first**: You never know what users come up with … Fancy filenames using »illegal« characters like `'`, `"`, `:`, `[`, `]`, `$` and so forth now work again and **don’t break _makethumbsf6_**. Try something like »`Fancy: Filename $["ÄÖÜß'] $25.00.jpg`«.
 
-* You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`. (This affects only the _generated_ images, _not_ your originals!)
+* For smaller images (width smaller than the largest breakpoint specified), there are **no duplicate `srcset` widths generated anymore**. Duplicate widths in a `srcset` prevent validation, and we want our HTML to validate at all times.
 
-* **Preview**: [This is how the sample page will look like.](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/) _(LOTS of documentation to be found there—just below the images!)_
+**What else is new?** See the [changelog][#changelog-of-sorts].
+
 
 ### Standalone
 
@@ -194,3 +194,16 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 * [Exiftool](http://www.sno.phy.queensu.ca/~phil/exiftool/)
 
 * For changes and setting options: A text editor that handles UTF-8 (no BOM please).
+
+
+## Changelog (of sorts)
+
+### Version 0.9.0
+
+* **Animated GIFs** are now handled (and resized) correctly. _Hint:_ If the generated lower resolution images look like 4 images on top of each other, you might want to upgrade your _ImageMagick_ to a newer version.
+
+* _Makethumbsf6_ now also handles **TIFF** (.tif, .tiff) files. Per default, these will be automatically **converted to JPEG** images (smaller, browsers can display them).
+
+* You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`. (This affects only the _generated_ images, _not_ your originals!)
+
+* **Preview**: [This is how the sample page will look like.](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/) _(LOTS of documentation to be found there—just below the images!)_

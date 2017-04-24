@@ -16,11 +16,13 @@ It should create a set of subfolders:
 * `xl` — responsive images for extra-large screens (1920w)
 
 
-### What’s new in version 0.9.1?
+### What’s new in version 0.9.2?
 
-* **Safety first**: You never know what users come up with … Fancy filenames using »illegal« characters like `'`, `"`, `:`, `[`, `]`, `$` and so forth now work again and **don’t break _makethumbsf6_**. Try something like »`Fancy: Filename $["ÄÖÜß'] $25.00.jpg`«.
+* **Assistive technologies** for people with disabilities: Added some button descriptions and more [ARIA](https://www.w3.org/WAI/intro/aria) labels. Generated markup now passes [WAVE](http://wave.webaim.org/) test.
 
-* For smaller images (width smaller than the largest breakpoint specified), there are **no duplicate `srcset` widths generated anymore**. Duplicate widths in a `srcset` prevent validation, and we want our HTML to validate at all times.
+* _Makethumbsf6_ now uses **Foundation’s »thumbnail« class** for the generated thumbnail links. This makes the visual presentation _more attractive_, is _more compatible_ with _Foundation 6_ and allows for _easy overall changes_ within the framework. (See also http://foundation.zurb.com/sites/docs/thumbnail.html.)
+
+* Generated thumbnail markup now has **proper ARIA labels**.
 
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
@@ -196,7 +198,15 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 * For changes and setting options: A text editor that handles UTF-8 (no BOM please).
 
 
+
 ## Changelog (of sorts)
+
+### Version 0.9.1
+
+* **Safety first**: You never know what users come up with … Fancy filenames using »illegal« characters like `'`, `"`, `:`, `[`, `]`, `$` and so forth now work again and **don’t break _makethumbsf6_**. Try something like »`Fancy: Filename $["ÄÖÜß'] $25.00.jpg`«.
+
+* For smaller images (width smaller than the largest breakpoint specified), there are **no duplicate `srcset` widths generated anymore**. Duplicate widths in a `srcset` prevent validation, and we want our HTML to validate at all times.
+
 
 ### Version 0.9.0
 

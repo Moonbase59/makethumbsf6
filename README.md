@@ -22,7 +22,7 @@ It should create a set of subfolders:
 
 * For smaller images (width smaller than the largest breakpoint specified), there are **no duplicate `srcset` widths generated anymore**. Duplicate widths in a `srcset` prevent validation, and we want our HTML to validate at all times.
 
-**What else is new?** See the [changelog](#changelog-of-sorts).
+**What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
 
 ### Standalone

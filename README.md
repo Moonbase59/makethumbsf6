@@ -23,6 +23,8 @@ It should create a set of subfolders:
 
 * You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`. (This affects only the _generated_ images, _not_ your originals!)
 
+* **Preview**: [This is how the sample page will look like.](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/) _(LOTS of documentation to be found there—just below the images!)_
+
 ### Standalone
 
 If run within a »normal« image folder, _makethumbsf6_ will also generate a **HTML sample file** with a **[PhotoSwipe](http://photoswipe.com/) lightbox** and almost all **documentation included**.

@@ -1,7 +1,5 @@
 # makethumbsf6
 
-
-
 ## Make thumbnails, responsive images and HTML/Zurb Foundation 6 markup all in one go!
 
 A _bash_ script, put it into `~/bin`, `chmod +x makethumbsf6` and for a first (standalone) trial run start it from _inside_ the `sample-gallery` folder.
@@ -24,7 +22,7 @@ It should create a set of subfolders:
 
 * Generated thumbnail markup now has **proper ARIA labels**.
 
-* Added some documentation on how to [install/update ImageMagick and exiftool](#installation-update-of-imagemagick-exiftool).
+* Added some documentation on how to [install/update ImageMagick and exiftool](#installationupdate-of-imagemagickexiftool).
 
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
@@ -35,11 +33,13 @@ If run within a »normal« image folder, _makethumbsf6_ will also generate a **H
 
 _You can use this to copy-and-paste actual responsive images and markup code for your website, or just for creating a nice slide show on the fly._
 
+
 ### ZURB Foundation 6 Frontend Framework
 
 If run inside a **[ZURB Foundation 6](http://foundation.zurb.com/)** folder structure (i.e, something like `src/assets/img/gallery/album-01/…`), it will instead generate a **ready-to-run partial** inside your `src/partials` folder. You can simply include this partial on a gallery page using Panini, for example as `{{> gallery-gallery-album-01 gid=1}}`.
 
 _You typically use this when working on projects using the Foundation framework, but the generated markup can easily be adapted for other frameworks._
+
 
 ### Automatic headlines, image captions and markup comments
 
@@ -54,6 +54,7 @@ _Makethumbsf6_ will _automatically_ read this data, and present you with a beaut
 Additionally, _makethumbsf6_ will automatically put the photographer’s name and (if specified) additional image credits (like maybe the image agency’s name) next to your caption text. This makes it super-easy for you to follow licensing or local laws, if so required.
 
 **Run _makethumbsf6_ inside the `sample-gallery` folder, then view the generated HTML file with your browser.** All sample images have tags (some even GPS data) so you can get a first idea of what can be done. Feel free to change some tags within the sample images (maybe using _exiftool_ or another application you prefer), then run _makethumbsf6_ again to see what’s changed.
+
 
 #### Image tags currently known and used by _makethumbsf6_:
 
@@ -120,6 +121,7 @@ The _credits_ in the lightbox can also be displayed on a new line, using a sligh
 }
 ```
 
+
 ### Example: Same image, responsive, fullsize.
 
 This shows the generated HTML for the same image, fullsize, with responsive markup (using a `srcset`, so the user’s browser decides which image to actually load; this also neatly solves all problems with Retina displays and the like):
@@ -146,6 +148,7 @@ This shows the generated HTML for the same image, fullsize, with responsive mark
 In the _standalone version_, the generated HTML page will also show this image so you can verify that everything loads as expected.
 
 When generating a _Foundation 6 partial_, the fullsize image markup will _also be included, but commented out_. This allows to copy-paste perfect responsive image markup for other places on your website. Usually, when generating the production version, the HTML will run through some minification process anyway and the comment be cleaned out automatically, so no overhead is generated for the production site. (Check your _gulpfile.babel.js_ and _htmlmin_.)
+
 
 ## Customization: Have _makethumbsf6_ do what _you_ need!
 
@@ -238,7 +241,7 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 * Follow the installation instructions on [ImageMagick’s](https://www.imagemagick.org/script/binary-releases.php) and [Exiftool’s](http://www.sno.phy.queensu.ca/~phil/exiftool/) homepages.
 
 
-# Windows
+### Windows
 
 * A _bash script_ like _makethumbsf6_ will not work on the Windows command line, sorry for that. I invite you to study the code nevertheless—maybe it’s _you_ who comes up with a Windows equivalent?
 

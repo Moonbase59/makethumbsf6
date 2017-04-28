@@ -14,13 +14,11 @@ It should create a set of subfolders:
 * `xl` — responsive images for extra-large screens (1920w)
 
 
-### What’s new in version 0.9.3?
+### What’s new in version 0.9.4?
 
-* Cleaned up lightbox »share« links so no »mixed content« warnings anymore.
+* Sample page: No caption texts anymore for thumbnails.
 
-* Added some documentation on how to [install/update ImageMagick and exiftool](#installationupdate-of-imagemagickexiftool).
-
-* Added a shameless PITCHME.md with [some slides](https://gitpitch.com/Moonbase59/makethumbsf6/master). :-)
+* Sample page: Added a little styling to the thumbnails, just to show how.
 
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
@@ -248,6 +246,15 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 
 
 ## Changelog (of sorts)
+
+### Version 0.9.3
+
+* Cleaned up lightbox »share« links so no »mixed content« warnings anymore.
+
+* Added some documentation on how to [install/update ImageMagick and exiftool](#installationupdate-of-imagemagickexiftool).
+
+* Added a shameless PITCHME.md with [some slides](https://gitpitch.com/Moonbase59/makethumbsf6/master). :-)
+
 
 ### Version 0.9.2
 

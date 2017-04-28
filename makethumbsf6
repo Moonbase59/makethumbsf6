@@ -189,7 +189,7 @@
 #
 
 # Version
-VERSION='0.9.3'
+VERSION='0.9.4'
 
 # define me
 me=$(basename "$0")
@@ -487,6 +487,29 @@ cat >> "${GALLERY_PATH}" <<EOF
       figure {
         background-color: lightgray;
         padding: 1rem 1rem 1rem 1rem;
+      }
+      /* A little styling for the thumbnails, just to show how */
+      .thumbnail {
+        display: inline-block;
+        max-width: 100%;
+        margin-bottom: 1rem;
+        border: solid 4px #fefefe;
+        border-radius: 0;
+        box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.2);
+        line-height: 0;
+      }
+      a.thumbnail {
+        transition: box-shadow 200ms ease-out;
+      }
+      a.thumbnail:hover, a.thumbnail:focus {
+        box-shadow: 0 0 6px 1px rgba(6, 106, 192, 0.5);
+      }
+      a.thumbnail image {
+        box-shadow: none;
+      }
+      /* Don’t display caption on thumbnails (overly complicated in this demo) */
+      figure > a + figcaption {
+        display: none;
       }
       /* Make image credits a little smaller, on a new line */
       .imagecredits {

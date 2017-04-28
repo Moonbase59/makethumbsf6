@@ -24,7 +24,7 @@ It should create a set of subfolders:
 
 * Generated thumbnail markup now has **proper ARIA labels**.
 
-* Added some documentation on **how to install/update ImageMagick and exiftool** on _Ubuntu_ and _Linux Mint_.
+* Added some documentation on how to [install/update ImageMagick and exiftool](#installation-update-of-imagemagick-exiftool).
 
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
@@ -203,9 +203,46 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 
 ## Installation/Update of ImageMagick/Exiftool
 
+### Ubuntu, Linux Mint
+
 * [Installing ImageMagick and Exiftool for Ubuntu 14.04/16.04 and Linux Mint 17.x/18.x](docs/install-imagemagick-exiftool.md)
 
 * [ImageMagick update for Ubuntu 14.04/16.04 and Linux Mint 17.x/18.x](docs/imagemagick-update.md)
+
+
+### RedHat/CentOS
+
+* There will most probably be RPMs in your system’s repositories. Alternatively, follow the installation instructions on [ImageMagick’s](https://www.imagemagick.org/script/binary-releases.php) and [Exiftool’s](http://www.sno.phy.queensu.ca/~phil/exiftool/) homepages.
+
+
+### Other Linuxes
+
+* First, try to verify if both tools are installed by doing a `identify -version` for _ImageMagick_ and `exiftool -ver` for _exiftool_ in a terminal window.
+
+* If they are not, try to locate them in your repositories, using the appropriate package or software manager. Preferably install from there.
+
+* If all else fails, follow the installation instructions on [ImageMagick’s](https://www.imagemagick.org/script/binary-releases.php) and [Exiftool’s](http://www.sno.phy.queensu.ca/~phil/exiftool/) homepages.
+
+
+### FreeBSD
+
+* The good news: _Yes,_ I’ve seen it working on FreeBSD.
+
+* The bad news: Since _bash_ is neither the default shell nor even included in the default FreeBSD installation, you’ll have to install _bash_ + _ImageMagick_ + _exiftool_ + _makethumbsf6_. Then `chsh` to bash and use it.
+
+* It might still be worth the effort. Thanks for considering.
+
+
+### Mac OS X
+
+* Follow the installation instructions on [ImageMagick’s](https://www.imagemagick.org/script/binary-releases.php) and [Exiftool’s](http://www.sno.phy.queensu.ca/~phil/exiftool/) homepages.
+
+
+# Windows
+
+* A _bash script_ like _makethumbsf6_ will not work on the Windows command line, sorry for that. I invite you to study the code nevertheless—maybe it’s _you_ who comes up with a Windows equivalent?
+
+* You might still want to get _ImageMagick_ and _exiftool_. Follow the installation instructions on [ImageMagick’s](https://www.imagemagick.org/script/binary-releases.php) and [Exiftool’s](http://www.sno.phy.queensu.ca/~phil/exiftool/) homepages.
 
 
 

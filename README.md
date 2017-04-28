@@ -14,15 +14,13 @@ It should create a set of subfolders:
 * `xl` — responsive images for extra-large screens (1920w)
 
 
-### What’s new in version 0.9.2?
+### What’s new in version 0.9.3?
 
-* **Assistive technologies** for people with disabilities: Added some button descriptions and more [ARIA](https://www.w3.org/WAI/intro/aria) labels. Generated markup now passes [WAVE](http://wave.webaim.org/) test.
-
-* _Makethumbsf6_ now uses **Foundation’s »thumbnail« class** for the generated thumbnail links. This makes the visual presentation _more attractive_, is _more compatible_ with _Foundation 6_ and allows for _easy overall changes_ within the framework. (See also http://foundation.zurb.com/sites/docs/thumbnail.html.)
-
-* Generated thumbnail markup now has **proper ARIA labels**.
+* Cleaned up lightbox »share« links so no »mixed content« warnings anymore.
 
 * Added some documentation on how to [install/update ImageMagick and exiftool](#installationupdate-of-imagemagickexiftool).
+
+* Added a shameless PITCHME.md with [some slides](https://gitpitch.com/Moonbase59/makethumbsf6/master). :-)
 
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
@@ -250,6 +248,15 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 
 
 ## Changelog (of sorts)
+
+### Version 0.9.2
+
+* **Assistive technologies** for people with disabilities: Added some button descriptions and more [ARIA](https://www.w3.org/WAI/intro/aria) labels. Generated markup now passes [WAVE](http://wave.webaim.org/) test.
+
+* _Makethumbsf6_ now uses **Foundation’s »thumbnail« class** for the generated thumbnail links. This makes the visual presentation _more attractive_, is _more compatible_ with _Foundation 6_ and allows for _easy overall changes_ within the framework. (See also http://foundation.zurb.com/sites/docs/thumbnail.html.)
+
+* Generated thumbnail markup now has **proper ARIA labels**.
+
 
 ### Version 0.9.1
 

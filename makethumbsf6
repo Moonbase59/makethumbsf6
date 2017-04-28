@@ -189,7 +189,7 @@
 #
 
 # Version
-VERSION='0.9.2'
+VERSION='0.9.3'
 
 # define me
 me=$(basename "$0")
@@ -1273,7 +1273,7 @@ cat >> "${GALLERY_PATH}" <<EOF
       <li>Buy me <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11346898" target="_blank" title="Buy me a beer! (Paypal, €&nbsp;3.90)">a beer</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347235" target="_blank" title="Buy me a cappucino! (Paypal, €&nbsp;3.50)">a cappuccino</a>,
       or <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347307" target="_blank" title="Buy me a glass of red wine! (Paypal, €&nbsp;5.90)">a glass of red wine</a>!</li>
-      <li>Send me something from my <a href="http://www.amazon.de/gp/redirect.html?ie=UTF8&amp;location=http%3A%2F%2Fwww.amazon.de%2Fgp%2Fregistry%2Fwishlist%2FK8T279QJ5LUA&amp;site-redirect=de&amp;tag=computepartnerma&amp;linkCode=ur2&amp;camp=1638&amp;creative=19454" target="_blank" title="Buy me something from my Amazon wishlist! (Amazon.de)">Amazon wishlist</a><img src="https://www.assoc-amazon.de/e/ir?t=computepartnerma&amp;l=ur2&amp;o=3" width="1" height="1" alt="" style="border:none !important; margin:0px !important;">!</li>
+      <li>Send me something from my <a href="https://www.amazon.de/gp/redirect.html?ie=UTF8&amp;location=http%3A%2F%2Fwww.amazon.de%2Fgp%2Fregistry%2Fwishlist%2FK8T279QJ5LUA&amp;site-redirect=de&amp;tag=computepartnerma&amp;linkCode=ur2&amp;camp=1638&amp;creative=19454" target="_blank" title="Buy me something from my Amazon wishlist! (Amazon.de)">Amazon wishlist</a><img src="https://www.assoc-amazon.de/e/ir?t=computepartnerma&amp;l=ur2&amp;o=3" width="1" height="1" alt="" style="border:none !important; margin:0px !important;">!</li>
       <li>Or just donate as much as you feel like (Paypal; <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11347390" target="_blank" title="Donate (Paypal, any amount in Euros)">EUR</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348209" target="_blank" title="Donate (Paypal, any amount in US$)">USD</a>,
       <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=11348311" target="_blank" title="Donate (Paypal, any amount in Canadian Dollars)">CAD</a>,
@@ -1349,7 +1349,7 @@ cat >> "${GALLERY_PATH}" <<EOF
             <button class="pswp__button pswp__button--fs" type="button" aria-label="Fullscreen" title="Fullscreen"></button>
             <button class="pswp__button pswp__button--zoom" type="button" aria-label="Zoom" title="Zoom +/-"></button>
 
-            <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+            <!-- Preloader demo https://codepen.io/dimsemenov/pen/yyBWoR -->
             <!-- element will get class pswp__preloader__active when preloader is running -->
             <div class="pswp__preloader">
               <div class="pswp__preloader__icn">
@@ -1537,9 +1537,9 @@ cat >> "${GALLERY_PATH}" <<EOF
             showHideOpacity:true, // better if thumbs don’t have image aspect ratio
 
             shareButtons: [
-                {id:'facebook', label:'<i class="fa fa-facebook-official"></i>&emsp;Share on Facebook', url:'https://www.facebook.com/sharer/sharer.php?u={{url}}'},
-                {id:'twitter', label:'<i class="fa fa-twitter"></i>&emsp;Tweet on Twitter', url:'https://twitter.com/intent/tweet?text={{text}}&url={{url}}'},
-                {id:'pinterest', label:'<i class="fa fa-pinterest"></i>&emsp;Pin on Pinterest', url:'http://www.pinterest.com/pin/create/button/?url={{url}}&media={{image_url}}&description={{text}}'},
+                {id:'facebook', label:'<i class="fa fa-facebook-official"></i>&emsp;Share on Facebook', url:'//www.facebook.com/sharer/sharer.php?u={{url}}'},
+                {id:'twitter', label:'<i class="fa fa-twitter"></i>&emsp;Tweet on Twitter', url:'//twitter.com/intent/tweet?text={{text}}&url={{url}}'},
+                {id:'pinterest', label:'<i class="fa fa-pinterest"></i>&emsp;Pin on Pinterest', url:'//www.pinterest.com/pin/create/button/?url={{url}}&media={{image_url}}&description={{text}}'},
                 {id:'download', label:'<i class="fa fa-download"></i>&emsp;Download', url:'{{raw_image_url}}', download:true}
             ],
             // Next 3 functions return data for share links

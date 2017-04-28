@@ -1,7 +1,3 @@
----
-title: makethumbsf6
-theme: white
----
 # makethumbsf6
 
 Make thumbnails, responsive images and HTML / Zurb Foundation 6 markup all in one go!

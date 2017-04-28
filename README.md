@@ -24,6 +24,8 @@ It should create a set of subfolders:
 
 * Generated thumbnail markup now has **proper ARIA labels**.
 
+* Added some documentation on **how to install/update ImageMagick and exiftool** on _Ubuntu_ and _Linux Mint_.
+
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
 
 
@@ -196,6 +198,14 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 * [Exiftool](http://www.sno.phy.queensu.ca/~phil/exiftool/)
 
 * For changes and setting options: A text editor that handles UTF-8 (no BOM please).
+
+
+
+## Installation/Update of ImageMagick/Exiftool
+
+* [Installing ImageMagick and Exiftool for Ubuntu 14.04/16.04 and Linux Mint 17.x/18.x](docs/install-imagemagick-exiftool.md)
+
+* [ImageMagick update for Ubuntu 14.04/16.04 and Linux Mint 17.x/18.x](docs/imagemagick-update.md)
 
 
 

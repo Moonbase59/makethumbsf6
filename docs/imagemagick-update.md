@@ -2,6 +2,8 @@
 
 _2017-04-28 – Matthias C. Hormann_
 
+**Perform this step _only_ if you need to convert _animated GIFs_ and your ImageMagick version is so old that it produces GIFs that look like 4 images stacked on top of each other.**
+
 Unfortunately, on Ubuntu and derivatives like Linux Mint, we need to compile and install a newer ImageMagick version directly from the sources, because there is no current ready-made package.
 
 But it’s not that complicated and I’ll show you how to do it. To start, just open a terminal and enter the following command:

@@ -119,4 +119,4 @@ Just run `makethumbsf6` inside any images folder.
 
 <a href="https://github.com/Moonbase59/makethumbsf6" target="_blank">On Github</a>
 
-Or visit the <a href="http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/" target="_blank">Sample HTML page</a>
+Or visit the <a href="http://kaufen-ist-toll.de/demos/makethumbsf6/sample-gallery/" target="_blank">Sample HTML page</a>

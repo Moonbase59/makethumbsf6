@@ -20,7 +20,7 @@ It should create a set of subfolders:
 
 * Sample page: Added a little styling to the thumbnails, just to show how.
 
-**What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/).
+**What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/makethumbsf6/sample-gallery/).
 
 
 ### Standalone
@@ -280,4 +280,4 @@ Drop me a line [@Moonbase59](https://twitter.com/intent/tweet?text=%40Moonbase59
 
 * You can now specify image **type conversion**, i.e. convert **TIFF to JPEG**, **MPO to JPEG** and so forth. For purely aesthetic reasons, `.jpeg` will also be renamed to `.jpg`. (This affects only the _generated_ images, _not_ your originals!)
 
-* **Preview**: [This is how the sample page will look like.](http://kaufen-ist-toll.de/demos/mkthumbsf6/sample-gallery/) _(LOTS of documentation to be found there—just below the images!)_
+* **Preview**: [This is how the sample page will look like.](http://kaufen-ist-toll.de/demos/makethumbsf6/sample-gallery/) _(LOTS of documentation to be found there—just below the images!)_

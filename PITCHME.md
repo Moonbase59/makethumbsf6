@@ -26,6 +26,19 @@ With _makethumbsf6_ you can!
 - Normal or squared (cropped) thumbnails
 - Sample HTML page
 - Lightbox (PhotoSwipe)
+
+---
+
+## PhotoSwipe Lightbox
+
+![docs/lightbox-small-3.m.png](docs/lightbox-small-3.m.png)
+
+The lightbox on an Android smartphone.
+
+---
+
+## … and more …
+
 - Automatic captions from EXIF/IPTC/XMP image data
 - Foundation 6 partial ready to include
 

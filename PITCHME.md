@@ -6,7 +6,7 @@ Make thumbnails, responsive images and HTML / Zurb Foundation 6 markup all in on
 
 ## Need all of these quick?
 
-![docs/many-devices.png](docs/many-devices.png)
+![docs/many-devices.png](docs/many-devices.s.png)
 
 With _makethumbsf6_ you can!
 
@@ -31,7 +31,7 @@ With _makethumbsf6_ you can!
 
 ## PhotoSwipe Lightbox
 
-![docs/lightbox-small-3.m.png](docs/lightbox-small-3.m.png)
+![docs/lightbox-small-3.s.png](docs/lightbox-small-3.s.png)
 
 The lightbox on an Android smartphone.
 
@@ -46,10 +46,9 @@ The lightbox on an Android smartphone.
 
 ## ZURB Foundation 6
 
-![docs/foundation6-thumbnails](docs/foundation6-thumbnails.png)
+![docs/foundation6-thumbnails](docs/foundation6-thumbnails.s.png)
 
-_makethumbsf6_ generates a complete partial.
-
+_makethumbsf6_ generates a complete partial.  
 Ready to include.
 
 ---

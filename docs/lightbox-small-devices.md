@@ -24,6 +24,8 @@ Or just **rotate your phone by 90°** into portrait mode. Image and text should 
 ![lightbox-small-3.m.png](lightbox-small-3.m.png)  
 _<small>Portrait image in portrait mode with lots of text</small>_
 
+This image has location data. You could even **tap on the link** below the image caption to open up Google Maps and have it navigate you directly to the location where I took the image. :-)
+
 Again, to hide the text, **tap on the text**:
 
 ![lightbox-small-4.m.png](lightbox-small-4.m.png)  

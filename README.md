@@ -20,6 +20,8 @@ It should create a set of subfolders:
 
 * Sample page: Added a little styling to the thumbnails, just to show how.
 
+* Documentation on [how to use the lightbox on small devices](docs/lightbox-small-devices.md).
+
 **What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/makethumbsf6/sample-gallery/).
 
 

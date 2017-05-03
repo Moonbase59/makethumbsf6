@@ -22,7 +22,7 @@ It should create a set of subfolders:
 
 * Documentation on [how to use the lightbox on small devices](docs/lightbox-small-devices.md).
 
-**What else is new?** See the [changelog](#changelog-of-sorts). Or check out the auto-generated [sample page](http://kaufen-ist-toll.de/demos/makethumbsf6/sample-gallery/).
+**What else is new?** [Changelog](#changelog-of-sorts) · [Sample Page](http://kaufen-ist-toll.de/demos/makethumbsf6/sample-gallery/) · [GitPitch](https://gitpitch.com/Moonbase59/makethumbsf6/master) · [YouTube](https://www.youtube.com/watch?v=F4tYtPeAoFY&list=PLulZAiw5si6CSdkvYKitM2j447nxK0Nfq)
 
 
 ### Standalone
